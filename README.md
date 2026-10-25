@@ -1,9 +1,9 @@
-# Powertec Utilities — Electrical Safety Control Portal (redesigned demonstration)
+POWERTEC UTILITIES | LOCK & KEY CONTROL PORTAL
 
-This is a **new layout**, not a restyling of the previous portal: full corporate navigation, large hero with switchgear illustration, dedicated module landing cards, corporate footer and mobile menu.
+This is a SEPARATE locking-system website. The Powertec corporate main website is not modified.
 
-## GitHub Pages
-Extract ZIP and upload all 7 files to repository root, then Settings → Pages → Deploy from branch → main → /(root).
+Visual reference: the user-provided Powertec Utilities main website screenshots. The portal uses the same dark photographic hero, orange logo, white uppercase typography, square orange hamburger menu, charcoal sections and orange accents.
 
-## Important
-The original main-site Version 25 source was not accessible; this uses recovered Powertec logo and available visual references, not an exact source-derived replica. Browser-local data is not secure, shared or approved for live electrical safety operations. No live site records should be entered. `lv-reference.jpg` is an unverified reference.
+Upload all files from this folder directly to the ROOT of the new GitHub repository. Configure GitHub Pages: main / root.
+
+PROTOTYPE ONLY: browser-local storage, no multi-user synchronisation, access controls or approved safety-document issuance. Do not use for operational isolation control or enter confidential records. Provisional LV drawing references are not verified isolation points.

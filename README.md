@@ -1,9 +1,13 @@
-POWERTEC UTILITIES | LOCK & KEY CONTROL PORTAL
+# Powertec Utilities — Lock Control Portal (UX edition)
 
-This is a SEPARATE locking-system website. The Powertec corporate main website is not modified.
+Upload all files directly to the root of a GitHub repository and enable GitHub Pages from `main` / `(root)`.
 
-Visual reference: the user-provided Powertec Utilities main website screenshots. The portal uses the same dark photographic hero, orange logo, white uppercase typography, square orange hamburger menu, charcoal sections and orange accents.
+## Improvements
+- Same Powertec corporate dark photographic visual identity and recovered logo.
+- Streamlined homepage, direct links to each register, clickable totals and recent-record shortcuts.
+- Global search (top-right search icon; Ctrl/Cmd+K), accessible from every page.
+- Improved mobile navigation and responsive record views.
+- Search, add/edit, per-record pages, cross-register references, CSV export, JSON backup/restore.
 
-Upload all files from this folder directly to the ROOT of the new GitHub repository. Configure GitHub Pages: main / root.
-
-PROTOTYPE ONLY: browser-local storage, no multi-user synchronisation, access controls or approved safety-document issuance. Do not use for operational isolation control or enter confidential records. Provisional LV drawing references are not verified isolation points.
+## Safety and data limitations
+This is a browser-local demonstration. It is **not** a live isolation control system, electronic PTW issue platform, secure database or shared multi-user register. Never store actual operational isolation keys, site drawings, safety documents, passwords or personal details in public GitHub repositories or in this prototype. Provisional apparatus references are unverified.

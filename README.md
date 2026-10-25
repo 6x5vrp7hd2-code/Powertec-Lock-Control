@@ -1,15 +1,14 @@
-# Powertec Utilities — Electrical Control Portal (Brand Remodel)
+# Powertec Utilities — Electrical Safety Control (demonstration)
 
-## Upload to GitHub Pages
-Upload **all six files** in this folder to the repository root (not the ZIP). Enable Settings > Pages > Deploy from a branch > main > /(root).
+## GitHub Pages
+Upload all files from this ZIP to the **root** of the repository (not the ZIP itself). In Settings → Pages choose Deploy from a branch, `main`, `/ (root)`.
 
-Files: index.html, styles.css, app.js, powertec-logo.png, lv-reference.jpg, README.md.
+## Files
+- `index.html` — website shell, navigation, corporate header/footer
+- `styles.css` — Powertec corporate styling
+- `app.js` — functional dashboard, tracker registers, record details, local demo storage
+- `powertec-logo.png` — logo recovered from earlier available Powertec site file
+- `lv-reference.jpg` — unverified reference photograph (NOT a controlled drawing)
 
-## Branding
-The orange Powertec emblem/wordmark was extracted from a previously supplied Powertec-branded website file. The visual system uses Montserrat, charcoal #1E1E1E, orange #F58220, light grey #F2F2F2 and grey #6B6B6B. This is a visual remodel; the underlying tracker data model is unchanged.
-
-## Important
-Prototype only: browser localStorage; no server-side security, shared database, permissions, or immutable audit trail. Do not enter live PTW/SFT/LOA records, confidential site data or key custody information. Provisional SLD markers are not verified isolation points. No operational use without engineering and safety-rule approval.
-
-
-BRANDING: Remodelled against the publicly accessible Powertec Utilities main website at powertec-utilities.vercel.app, using the same corporate navigation hierarchy, dark hero, orange accents, Montserrat type and recovered Powertec logo. Exact underlying source CSS was not available; this is a close visual adaptation, not a byte-for-byte copy.
+## Limitations
+This is a client-side demonstration only. Browser-local data is not shared or secured. Do not use for real isolations, permit control, key release, or operational decisions. No real site details or confidential schematics should be uploaded to a public repository. The original corporate website Version 25 source archive was not recoverable in this session, so this design uses recovered branding and documented styling, not a claimed pixel-perfect clone.

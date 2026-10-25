@@ -1,14 +1,9 @@
-# Powertec Utilities — Electrical Safety Control (demonstration)
+# Powertec Utilities — Electrical Safety Control Portal (redesigned demonstration)
+
+This is a **new layout**, not a restyling of the previous portal: full corporate navigation, large hero with switchgear illustration, dedicated module landing cards, corporate footer and mobile menu.
 
 ## GitHub Pages
-Upload all files from this ZIP to the **root** of the repository (not the ZIP itself). In Settings → Pages choose Deploy from a branch, `main`, `/ (root)`.
+Extract ZIP and upload all 7 files to repository root, then Settings → Pages → Deploy from branch → main → /(root).
 
-## Files
-- `index.html` — website shell, navigation, corporate header/footer
-- `styles.css` — Powertec corporate styling
-- `app.js` — functional dashboard, tracker registers, record details, local demo storage
-- `powertec-logo.png` — logo recovered from earlier available Powertec site file
-- `lv-reference.jpg` — unverified reference photograph (NOT a controlled drawing)
-
-## Limitations
-This is a client-side demonstration only. Browser-local data is not shared or secured. Do not use for real isolations, permit control, key release, or operational decisions. No real site details or confidential schematics should be uploaded to a public repository. The original corporate website Version 25 source archive was not recoverable in this session, so this design uses recovered branding and documented styling, not a claimed pixel-perfect clone.
+## Important
+The original main-site Version 25 source was not accessible; this uses recovered Powertec logo and available visual references, not an exact source-derived replica. Browser-local data is not secure, shared or approved for live electrical safety operations. No live site records should be entered. `lv-reference.jpg` is an unverified reference.

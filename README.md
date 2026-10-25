@@ -10,3 +10,6 @@ The orange Powertec emblem/wordmark was extracted from a previously supplied Pow
 
 ## Important
 Prototype only: browser localStorage; no server-side security, shared database, permissions, or immutable audit trail. Do not enter live PTW/SFT/LOA records, confidential site data or key custody information. Provisional SLD markers are not verified isolation points. No operational use without engineering and safety-rule approval.
+
+
+BRANDING: Remodelled against the publicly accessible Powertec Utilities main website at powertec-utilities.vercel.app, using the same corporate navigation hierarchy, dark hero, orange accents, Montserrat type and recovered Powertec logo. Exact underlying source CSS was not available; this is a close visual adaptation, not a byte-for-byte copy.

@@ -13,3 +13,28 @@ body{font-family:Montserrat,Arial,Helvetica,sans-serif;background:#f5f5f5;color:
 footer{background:#1e1e1e;color:#ddd;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:30px max(22px,calc((100% - var(--max))/2))}.footer-brand{font-weight:900;letter-spacing:.1em;color:#fff}.footer-brand b{color:var(--orange)}.footer-copy{font-size:11px;color:#c0c0c0}
 @media(max-width:720px){.top{min-height:72px;padding:9px 16px}.brand-logo{height:45px;width:64px}.brand-words strong{font-size:17px}.brand-words small{font-size:8px;letter-spacing:.04em}.env{display:none}footer{padding:25px 18px}.footer-copy{line-height:1.6}}
 @media(max-width:390px){.brand-words small{font-size:7px}.brand-logo{width:51px;height:41px}.brand{gap:7px}}
+
+/* Corporate alignment: Powertec Utilities main website, October 2026 */
+:root{--orange:#f26a00;--ink:#141414;--dark:#1c1e20;--pale:#f4f4f1;--line:#d9d9d4;--max:1180px}
+body{font-family:Montserrat,Arial,sans-serif;background:#f6f6f3;color:var(--ink)}
+.utility-strip{background:#191b1e;color:#d7d7d7;min-height:32px;padding:8px max(22px,calc((100% - var(--max))/2));display:flex;justify-content:space-between;gap:20px;font-size:10px;letter-spacing:.14em;font-weight:700}
+.utility-strip span:first-child{color:#ff9a4c}
+.top{min-height:86px;box-shadow:0 1px 0 #e3e3e3;border-bottom:0}
+.brand-logo{object-fit:contain}.brand-words strong{font-weight:900;letter-spacing:.035em}.brand-words small{font-weight:700}
+.menu{border:0;background:#f26a00;color:#fff;border-radius:2px;padding:13px 18px;box-shadow:none}
+.menu span{color:#fff}.navigation{top:116px;border-top:3px solid var(--orange);border-radius:0}
+.navigation a{font-size:13px;text-transform:uppercase;letter-spacing:.055em}
+.hero{background:linear-gradient(110deg,#14171b,#252a30 66%,#352b23);border-bottom:0;padding-top:85px;padding-bottom:90px}
+.hero:before{content:'POWERTEC UTILITIES LTD';display:block;color:#ff9a4c;font-weight:800;letter-spacing:.2em;font-size:11px;margin-bottom:14px}
+.hero h1{font-size:clamp(36px,5.5vw,70px);line-height:1.07;letter-spacing:-.045em;max-width:970px;font-weight:900}
+.hero p{max-width:790px;font-size:18px;line-height:1.8}
+.eyebrow,.num{color:#f26a00;letter-spacing:.15em;font-size:11px;text-transform:uppercase;font-weight:800}
+.wrap{padding-top:52px;padding-bottom:90px}
+h2{font-size:clamp(24px,3vw,36px);font-weight:800;letter-spacing:-.025em}
+.card,.panel{background:#fff;border:1px solid #e1e1dd;border-radius:3px;box-shadow:none}
+.card{border-top:2px solid #ddd;padding:25px}.card:hover{border-top-color:var(--orange);box-shadow:0 9px 24px #0000000d}
+.card h3{font-weight:800;letter-spacing:-.015em}
+.btn:not(.secondary){background:#f26a00;color:#fff;border-radius:2px;text-transform:uppercase;letter-spacing:.045em;font-size:12px}
+.btn.secondary{border-radius:2px}input,select,textarea{border-radius:3px}
+footer{background:#1b1d20;border-top:4px solid #f26a00;padding-top:40px;padding-bottom:40px}
+@media(max-width:720px){.utility-strip{padding:8px 16px;font-size:9px}.utility-strip span:last-child{display:none}.navigation{top:105px}.hero{padding:58px 18px 65px}.wrap{padding-top:30px}.card{padding:18px}}

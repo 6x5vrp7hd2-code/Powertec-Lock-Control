@@ -1,111 +1,68 @@
-# Powertec Isolation Control
+# Powertec Isolation Control · Version 7
 
-AP office key, lock and safety document control, in the Powertec Training style:
-stacked powertec logo over a full-screen dark photo, rounded menu button, faint grid
-background, orange letterspaced labels, Montserrat type and Powertec orange.
-This is Version 6: the footer of every page ends "Version 6", so you can check the live site is up to date.
-All 27 files sit in one folder. There are no sub-folders.
-
-## Important: use its own repository
-
-This site has its own `index.html` and `styles.css`. Uploading it into the repository of
-the main Powertec Utilities site would overwrite that site's files. Create a new repository
-for it, for example `isolation-control`.
+AP office key, lock and safety document control in the Powertec Training style.
+The footer of every page ends "Version 7", so you can check the live site is up to date.
+All files sit in one folder. There are no sub-folders.
 
 ## Upload to GitHub (works on a phone)
 
-1. Unzip `powertec-isolation-control.zip` in the Files app.
-2. In Safari, open the new repository on github.com.
-3. Tap **Add file → Upload files → choose your files**.
-4. Open the unzipped folder, tap **Select**, select all 27 files, tap **Open**.
-5. Tap **Commit changes**.
-6. Go to **Settings → Pages → Deploy from a branch → main → / (root) → Save**.
+1. Unzip the zip in the Files app.
+2. In Safari, open the site's own repository on github.com (not the main Powertec Utilities one).
+3. Delete the old files first, especially `references-*.jpg`, `sld-tier4.jpg` and `sld-hyperscale.jpg`, which are no longer used.
+4. Tap **Add file → Upload files → choose your files**, select every file, tap **Open**, then **Commit changes**.
+5. **Settings → Pages → Deploy from a branch → main → / (root) → Save**.
 
-The site appears at `https://<your-username>.github.io/<repository-name>/` within a few minutes.
-File names must stay exactly as they are, lower case. GitHub Pages treats `Logo.png` and `logo.png` as different files.
+## Lock colours
 
-## Pages
-
-| File | Page |
-| --- | --- |
-| `index.html` | Front page |
-| `keys.html` | Key tracker |
-| `info.html` | Information tracker (lockout boxes) |
-| `ptw.html` | Permit to work tracker |
-| `sft.html` | Sanction for test tracker |
-| `loa.html` | Limitation of access tracker |
-| `cp.html` | CP register: name, company, contact details, authorisation |
-| `new.html` | New safety document: PTW, SFT or LOA, every field a dropdown |
-| `record.html` | Record page opened from any tracker line |
-| `procedure.html` | System procedure: seven stages, step by step, plus routines |
-| `lv-schematic.html` | Schematics and layouts: all five drawings with live lock numbers; in-use numbers are struck through and open their document |
-
-## Shared files
-
-| File | What it is |
-| --- | --- |
-| `styles.css` | Colours, fonts, layout, photos and phase-in |
-| `app.js` | Menu, trackers, record pages, procedure and example data |
-| `logo-stack.png` | Stacked powertec logo, transparent background |
-| `mark.png` | Swoosh mark, used for the browser tab icon |
-| `favicon.png` | Browser tab icon |
-| `hero.jpg` | Front page photo (your substation photo) |
-| `banner-keys.jpg` | Photo: key and information trackers |
-| `banner-permits.jpg` | Photo: PTW, SFT and record pages |
-| `banner-substation.jpg` | Photo: LOA tracker and CP register |
-| `banner-network.jpg` | Photo: procedure and schematic |
-| `sld-tier4.jpg` | Tier IV single line diagram (clean; lock circles are drawn over it by the site) |
-| `sld-hyperscale.jpg` | Hyperscale 2N single line diagram (clean; lock circles are drawn over it by the site) |
-| `dwg-layout.jpg` | Data centre layout: 10 kV substations, generators, UPS, cooling, server hall |
-| `dwg-campus.jpg` | AC powered data centre: utility substation, generators, electrical room, cooling plant |
-| `dwg-room.jpg` | Data centre electrical room: switchgear, ATS, UPS, STS, batteries, RPPs, PDUs, cooling |
-
-## New safety documents
-
-Tap **+ New safety document** on the front page, in the menu, or on the PTW, SFT and LOA trackers.
-Every field is a dropdown. Only locks on their hooks, free lockout boxes and active CPs can be chosen.
-On a live document, the Competent person card shows the CP's phone and email; **Open CP details** goes to their page.
-
-New documents and cancellations are saved in that phone's or computer's browser only.
-Other devices do not see them. A shared register for the whole team needs a small online
-database behind the site.
-
-The dropdown lists (work types, tests, locations, reasons, boundaries, durations) are under
-`OPTIONS` in `app.js`.
-
-## Choosing points of isolation from the drawing
-
-On a new PTW or SFT, section 2 is **Points of isolation**:
-
-1. Choose **HV**, **LV** or **HV and LV**. Each one opens its own list of plant.
-2. Choose an item of plant. The matching drawing opens full screen, centred on that plant, with its lock numbers pulsing orange.
-3. Tap each lock number you need. It fills in and is added to the document. Tap again to remove it.
-4. Tap **Done** to go back to the form. Open another plant to add more.
-
-Numbers already on a live or pending document are grey and struck through, and cannot be chosen.
-Tapping one shows which document holds it, with a link to it. On the Schematics page, tapping a
-struck-through number opens that document; tapping a free number opens the lock's record.
-
-Lock numbers run across all five drawings, so no two locks share a number:
-
-| Drawing | HV | LV |
+| Lock | Colour | Numbers |
 | --- | --- | --- |
-| Tier IV single line diagram | H-001 to H-025 | L-001 to L-055 |
-| Hyperscale single line diagram | H-026 to H-057 | L-056 to L-081 |
-| Data centre layout | H-058 to H-061 | L-082 to L-104 |
-| AC powered data centre | H-062 to H-064 | L-105 to L-124 |
-| Data centre electrical room | H-065 | L-125 to L-138 |
- The positions, plant names and descriptions are in
-`LOCKS` in `app.js`.
+| HV safety locks, every isolation point and earth switch | Blue | H-001 to H-238 |
+| LV safety locks | Yellow | L-001 to L-138 |
+| Lockout box locks, same number as the box | Red | LB01 to LB50 |
+| CP personal locks | Green | CP01 to CP50 |
 
-## Lockout boxes and box locks
+## HV network (blue locks)
 
-Every lockout box has its own box lock with the same number: box LB-06 is locked with lock LB-06,
-opened with key LB-06. When a document is issued the AP locks the box with its box lock and keeps
-the key; the working party fit their personal locks. The Information tracker shows each box lock as
-fitted or in its bay, and who holds the key.
+Two drawings, built from the installed gear:
 
-## Changing the records
+- **HV ring main** (`hv-ring.svg`): UMS01 and UMS02, 10 VCBs each (2 MCB incomers, 5 FCBs to the colo rings, plus
+  the rest), and the five colo rings. Each colo has 4 cells, each cell a UPM with MCS1, MCS2 and a VCB to its own
+  XFM01. Colo 1 has an extra Admin UPM.
+- **HV XFM02 network** (`hv-xfm02.svg`): UMS03 (supply from UMS02, 5 FCBs to UMS11 to UMS14), and UMS11 to UMS14, each
+  with 5 FCBs to the XFM02 in its cell of every colo. The second feeder from UMS02 loops in and out of UMS11, UMS12
+  and UMS13 and ends at UMS14.
 
-All records live at the top of `app.js` under `DATA`. They are example data.
-Edit, add or remove rows there; every tracker, record page and front page count updates automatically.
+Every circuit breaker and switch has an isolation lock and an earth switch lock (the bus section has no earth switch).
+H-001 to H-112 are the seven UMS boards; H-113 to H-238 are the 21 UPMs, in colo and cell order.
+
+## Key tracker menus
+
+On the key tracker, the Equipment menu breaks down into:
+- **HV · main substations (UMS)** → substation → switch
+- **HV · UPMs by colo and cell** → colo → cell → MCS1, MCS2 or VCB
+- **LV** → drawing → plant
+
+## Safety documents
+
+- Permits are split into **HV PTW** (`hvptw.html`, blue HV locks only) and **LV PTW** (`lvptw.html`, yellow LV locks only).
+  SFTs can be HV, LV or both. `ptw.html` lets you choose between the two permit registers.
+- Points of isolation are picked by tapping lock numbers on the drawing.
+- The issuing AP comes from the AP register; only HV-authorised APs can issue an HV PTW.
+- The CP and working party come from CP1 to CP50. A CP whose green lock is already on a box cannot be chosen.
+- **Cancelling:** an AP from the AP register ticks each check. The keys then return to their hooks, the
+  lockout box and its red lock are freed, and every green CP lock is released.
+- The home page shows live documents past their expiry, with a register on `expired.html`.
+
+## People
+
+- **AP register** (`ap.html`): name, role, authorised for, voltage levels, company, phone, email, ID06,
+  authorised by, authorisation date, expiry, status, notes. The four rows are placeholders until the site AP list
+  is loaded; edit `AP_LIST` in `app.js`.
+- **CP register** (`cp.html`): CP1 to CP50, green locks CP01 to CP50. Contact details are blank until added in
+  `CP_LIST` in `app.js`.
+
+## Data
+
+New documents and cancellations are saved in that phone's or computer's browser only. A shared register for the
+whole AP office needs an online database behind the site. Example records are for testing and must be replaced
+with verified site records before operational use.

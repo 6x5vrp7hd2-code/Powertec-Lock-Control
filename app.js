@@ -1,4 +1,4 @@
-/* Powertec Isolation Control — shared script, Version 7.
+/* Powertec Isolation & Document Control — shared script, Version 7.
    Every page loads this file. It draws the header, menu and footer, then builds the page
    named in <body data-page="...">. Records are initial example records for testing and must be
    replaced with verified site records before operational use.
@@ -210,22 +210,22 @@ function shell(page, heroHtml, mainHtml){
   const nav = NAV.map(([href,label,code,key]) => `<a href="${U(href)}"${key===page?' aria-current="page"':''}>${label}<small>${code}</small></a>`).join('');
   document.body.innerHTML = `
   <header class="site-head"><div class="wrap">
-    <a href="${U('index.html')}" aria-label="Powertec Isolation Control home"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION CONTROL</span></span></a>
+    <a href="${U('index.html')}" aria-label="Powertec Isolation & Document Control home"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION &amp; DOCUMENT CONTROL</span></span></a>
     <button class="menu-btn" id="openMenu" aria-label="Open menu" aria-expanded="false" aria-controls="menu">${I.burger}</button>
   </div></header>
   <div class="menu" id="menu" hidden role="dialog" aria-label="Menu">
-    <div class="top"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION CONTROL</span></span><button class="menu-btn" id="closeMenu" aria-label="Close menu">${I.close}</button></div>
-    <nav>${nav}</nav>
-    <p class="note">Powertec Isolation Control · AP office key, lock and safety document control</p>
+    <div class="top"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION &amp; DOCUMENT CONTROL</span></span><button class="menu-btn" id="closeMenu" aria-label="Close menu">${I.close}</button></div>
+    <nav>${nav}<a href="${U('security.html')}">Cybersecurity &amp; information assurance<small>SECURITY</small></a></nav>
+    <p class="note">Powertec Isolation & Document Control · AP office key, lock and safety document control</p>
   </div>
   ${heroHtml}
   <main>${page === 'home' ? '' : '<div class="wrap universal-back"><button type="button" class="back-nav" id="pageBack" aria-label="Go back to the previous page">← Back</button></div>'}${mainHtml}</main>
   <footer class="site-foot"><div class="wrap">
-    <a class="foot-brand" href="${U('index.html')}"><img src="mark.png" alt=""><span><b>powertec</b><small>isolation control</small></span></a>
+    <a class="foot-brand" href="${U('index.html')}"><img src="mark.png" alt=""><span><b>powertec</b><small>isolation &amp; document control</small></span></a>
     <div class="foot-links">
       <div class="foot-col"><h3>Registers</h3><a href="${U('keys.html')}">Key tracker</a><a href="${U('info.html')}">Lockout boxes</a><a href="${U('ap.html')}">AP register</a><a href="${U('cp.html')}">CP register</a></div>
       <div class="foot-col"><h3>Safety documents</h3><a href="${U('hvptw.html')}">HV permit to work</a><a href="${U('lvptw.html')}">LV permit to work</a><a href="${U('sft.html')}">Sanction for test</a><a href="${U('loa.html')}">Limitation of access</a></div>
-      <div class="foot-col"><h3>Resources</h3><a href="${U('lv-schematic.html')}">Drawings</a><a href="${U('expired.html')}">Expired documents</a><a href="${U('procedure.html')}">Procedure</a></div>
+      <div class="foot-col"><h3>Resources</h3><a href="${U('lv-schematic.html')}">Drawings</a><a href="${U('expired.html')}">Expired documents</a><a href="${U('procedure.html')}">Procedure</a><a href="${U('security.html')}">Cybersecurity &amp; information assurance</a></div>
     </div>
     <p class="foot-legal">© ${new Date().getFullYear()} Powertec Utilities Ltd. Registered in England &amp; Wales, company no. 08117942. Version 7 · Records require site verification before operational use.</p>
   </div></footer>`;
@@ -292,12 +292,16 @@ function home(){
   const live = s => DATA[s].filter(d => d.status === 'Live').length;
   const hero = `
   <section class="hero home"><div class="wrap">
-    <div class="kicker">AP OFFICE KEY &amp; SAFETY DOCUMENT CONTROL</div>
-    <h1 class="mega">One lock on every switch. Every key accounted for.</h1>
-    <p class="sub">A dedicated blue lock on every HV isolation point and earth switch, a yellow lock on every LV isolation point, red box locks and green CP locks, all in one register.</p>
-    <p class="lead">When a key leaves its hook, a tag takes its place. Every HV PTW, LV PTW, SFT and LOA shows exactly which locks, which lockout box and which competent person it relies on.</p>
+    <div class="home-brand-intro" aria-label="Powertec Utilities, Critical Infrastructure and Training">
+      <img src="logo-stack.png" alt="Powertec" class="home-brand-logo">
+      <div class="home-brand-services">UTILITIES <span>|</span> CRITICAL INFRASTRUCTURE <span>|</span> TRAINING</div>
+    </div>
+    <div class="home-system-title">
+      <div class="kicker">SYSTEM &amp; PROCESS PLATFORM</div>
+      <h1 class="mega">Isolation &amp;<br>Document Control</h1>
+      <p class="lead">Isolation equipment registers, key custody and controlled safety-document workflows.</p>
+    </div>
     <div class="home-expiry-position">${expiryAlert()}</div>
-    <div class="textlinks"><a href="${U('new.html')}">New safety document <span>→</span></a><a href="${U('keys.html')}">Open key tracker <span>→</span></a></div>
   </div></section>`;
   const main = `
   <section class="block dashboard-block"><div class="wrap">
@@ -545,7 +549,7 @@ function record(){
     body = fields([['AP no.',mono(r.id)],['Name',esc(r.name)],['Role',esc(r.role)],['Authorised for',esc(r.auth)],['Voltage levels',esc(r.voltage),1],['Company',esc(r.company)],['Phone',r.phone ? mono(r.phone) : '<span class="missing-contact">Not recorded</span>'],['Email',r.email ? mono(r.email) : '<span class="missing-contact">Not recorded</span>'],['ID06 card',mono(r.id06)],['Authorised by',esc(r.authBy)],['Authorisation date',mono(r.authDate)],['Authorised until',mono(r.expiry)],['Status',chip(r.status)],['Notes',esc(r.notes),1]]);
     side = `<div class="panel cppanel"><h3>Contact</h3>${personCard(r,'ap',false)}</div><div class="panel"><h3>Documents issued or cancelled</h3>${docs.length ? linkList(docs.map(d => d.id)) : '<p>None recorded</p>'}</div>`;
   }
-  document.title = `${r.id} · Powertec Isolation Control`;
+  document.title = `${r.id} · Powertec Isolation & Document Control`;
   const hero = `<section class="hero"><span class="orb" aria-hidden="true"></span><div class="wrap">
     <nav class="crumbs"><a href="${U('index.html')}">Home</a><span>/</span><a href="${U(p.file)}">${p.title}</a><span>/</span><span>${esc(r.id)}</span></nav>
     <div class="rec-head"><div><div class="rec-id">${esc(r.id)}${r.local ? ' · issued on this device' : ''}</div><h1 style="font-size:clamp(28px,4.4vw,46px)">${esc(title)}</h1></div>${r.status ? chip(r.status) : ''}</div>
@@ -793,12 +797,33 @@ function newDoc(){
   });
 }
 
+
+function securityPage(){
+  const hero = pageHero(crumbs('<span>Cybersecurity &amp; information assurance</span>'), 'Security design specification', 'Cybersecurity &amp; Information Assurance', 'Security architecture, information protection, risk treatment and incident response for the Isolation &amp; Document Control and Training platforms.');
+  const main = `<section class="block security-overview"><div class="wrap">
+    <div class="eyebrow">DESIGN SPECIFICATION · CLIENT TECHNICAL REVIEW</div>
+    <h2>Information assurance programme</h2>
+    <p class="lead">The security programme specifies the proposed controls for client information, access management, multi-organisation segregation, operational integrity and incident response.</p>
+    <div class="security-grid">
+      <article><span>01</span><h3>Scope &amp; threat basis</h3><p>Data classification, ownership, confidentiality and safety-system boundaries.</p></article>
+      <article><span>02</span><h3>Security architecture</h3><p>Identity, access controls, tenant separation, document integrity and training interfaces.</p></article>
+      <article><span>03</span><h3>Security technology</h3><p>Proposed hosting, infrastructure protection, monitoring and development controls.</p></article>
+      <article><span>04</span><h3>Risk &amp; assurance</h3><p>Threat assessments, verification requirements and client acceptance evidence.</p></article>
+      <article><span>05</span><h3>Incident response &amp; recovery</h3><p>Detection, containment, escalation, continuity and recovery scenarios.</p></article>
+      <article><span>06</span><h3>Governance &amp; delivery</h3><p>Contractual obligations, supplier controls and deployment acceptance gates.</p></article>
+    </div>
+    <div class="security-document"><div><div class="eyebrow">REFERENCE DOCUMENT</div><h3>Cybersecurity and Information Assurance Programme</h3><p>Security design specification · Version 3.0 · October 2026 · 44 pages</p><p class="security-caution">Design specification only. Proposed security controls are not a claim of implementation, certification or operational approval. This demonstration must not contain restricted client information.</p></div><a class="btn primary" href="CYBER1-PTU.pdf" target="_blank" rel="noopener">View security specification ↗</a></div>
+  </div></section>`;
+  shell('security',hero,main);
+}
+
 /* ---------- Start ---------- */
 loadEvents().forEach(applyEvent);
 syncRegisters();
 const page = document.body.dataset.page;
 if(page === 'home') home();
 else if(page === 'registers') registersPage();
+else if(page === 'security') securityPage();
 else if(page === 'expired') expiredPage();
 else if(page === 'ptw') ptwChooser();
 else if(PAGES[page]) tracker(page);

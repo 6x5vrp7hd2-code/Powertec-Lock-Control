@@ -1,4 +1,4 @@
-/* Powertec Isolation & Document Control — shared script, Version 7.
+/* Powertec Isolation & Safety Document Control — shared script, Version 7.
    Every page loads this file. It draws the header, menu and footer, then builds the page
    named in <body data-page="...">. Records are initial example records for testing and must be
    replaced with verified site records before operational use.
@@ -207,21 +207,30 @@ const recipientId = d => d.cp || d.holder || '';
 
 /* ---------- Header, menu, footer ---------- */
 function shell(page, heroHtml, mainHtml){
-  const nav = NAV.map(([href,label,code,key]) => `<a href="${U(href)}"${key===page?' aria-current="page"':''}>${label}<small>${code}</small></a>`).join('');
+  const item = (href,label,key) => `<a class="menu-sub-link" href="${U(href)}"${key===page?' aria-current="page"':''}>${label}</a>`;
+  const group = (label, links) => `<details class="menu-group"${links.some(x=>x[2]===page)?' open':''}><summary>${label}<span class="menu-chevron" aria-hidden="true">⌄</span></summary><div class="menu-subitems">${links.map(x=>item(...x)).join('')}</div></details>`;
+  const nav = `<a class="menu-primary" href="${U('expired.html')}"${page==='expired'?' aria-current="page"':''}>Expired documents</a>
+    <a class="menu-primary" href="${U('registers.html')}"${page==='registers'?' aria-current="page"':''}>Control centre</a>
+    <a class="menu-primary" href="${U('index.html')}#site-dashboard">Site dashboard</a>
+    ${group('Safety documents', [['hvptw.html','HV permit to work','hvptw'],['lvptw.html','LV permit to work','lvptw'],['sft.html','Sanction for test','sft'],['loa.html','Limitation of access','loa']])}
+    ${group('Personal lock register', [['ap.html','AP register','ap'],['cp.html','CP register','cp']])}
+    ${group('Trackers', [['info.html','Information tracker','info'],['keys.html','Key tracker','keys']])}
+    ${group('System resources', [['procedure.html','System procedure','procedure'],['lv-schematic.html','Drawings','schematic']])}
+    <a class="menu-primary menu-cyber" href="${U('security.html')}"${page==='security'?' aria-current="page"':''}>Cybersecurity &amp; information assurance</a>`;
   document.body.innerHTML = `
-  <header class="site-head"><div class="wrap">
-    <a href="${U('index.html')}" aria-label="Powertec Isolation & Document Control home"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION &amp; DOCUMENT CONTROL</span></span></a>
+  <header class="site-head${page==='home'?' home-header':''}"><div class="wrap">
+    <a href="${U('index.html')}" aria-label="Powertec Isolation & Safety Document Control home"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION &amp; SAFETY DOCUMENT CONTROL</span></span></a>
     <button class="menu-btn" id="openMenu" aria-label="Open menu" aria-expanded="false" aria-controls="menu">${I.burger}</button>
   </div></header>
   <div class="menu" id="menu" hidden role="dialog" aria-label="Menu">
-    <div class="top"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION &amp; DOCUMENT CONTROL</span></span><button class="menu-btn" id="closeMenu" aria-label="Close menu">${I.close}</button></div>
-    <nav>${nav}<a href="${U('security.html')}">Cybersecurity &amp; information assurance<small>SECURITY</small></a></nav>
-    <p class="note">Powertec Isolation & Document Control · AP office key, lock and safety document control</p>
+    <div class="top"><span class="brand"><img class="brand-logo" src="logo-stack.png" alt="Powertec"><span class="brand-name">ISOLATION &amp; SAFETY DOCUMENT CONTROL</span></span><button class="menu-btn" id="closeMenu" aria-label="Close menu">${I.close}</button></div>
+    <nav aria-label="Main navigation">${nav}</nav>
+    <p class="note">Powertec Isolation & Safety Document Control · AP office key, lock and safety document control</p>
   </div>
   ${heroHtml}
   <main>${page === 'home' ? '' : '<div class="wrap universal-back"><button type="button" class="back-nav" id="pageBack" aria-label="Go back to the previous page">← Back</button></div>'}${mainHtml}</main>
   <footer class="site-foot"><div class="wrap">
-    <a class="foot-brand" href="${U('index.html')}"><img src="mark.png" alt=""><span><b>powertec</b><small>isolation &amp; document control</small></span></a>
+    <a class="foot-brand" href="${U('index.html')}"><img src="mark.png" alt=""><span><b>powertec</b></span></a>
     <div class="foot-links">
       <div class="foot-col"><h3>Registers</h3><a href="${U('keys.html')}">Key tracker</a><a href="${U('info.html')}">Lockout boxes</a><a href="${U('ap.html')}">AP register</a><a href="${U('cp.html')}">CP register</a></div>
       <div class="foot-col"><h3>Safety documents</h3><a href="${U('hvptw.html')}">HV permit to work</a><a href="${U('lvptw.html')}">LV permit to work</a><a href="${U('sft.html')}">Sanction for test</a><a href="${U('loa.html')}">Limitation of access</a></div>
@@ -298,13 +307,13 @@ function home(){
     </div>
     <div class="home-system-title">
       <div class="kicker">SYSTEM &amp; PROCESS PLATFORM</div>
-      <h1 class="mega">Isolation &amp;<br>Document Control</h1>
-      <p class="lead">Isolation equipment registers, key custody and controlled safety-document workflows.</p>
+      <h1 class="mega">Isolation &amp;<br>Safety Document Control</h1>
+      <p class="lead">Asset Isolation Registers…</p>
     </div>
     <div class="home-expiry-position">${expiryAlert()}</div>
   </div></section>`;
   const main = `
-  <section class="block dashboard-block"><div class="wrap">
+  <section class="block dashboard-block" id="site-dashboard"><div class="wrap">
     <div class="dashboard-heading"><div><div class="eyebrow">Operational overview</div><h2>Site dashboard</h2><p>Document status and key custody at a glance.</p></div><a class="btn primary small" href="${U('new.html')}">+ New document</a></div>
     <div class="dashboard-metrics" aria-label="Site status">
       <a href="${U('hvptw.html')}"><b>${live('hvptw')}</b><span>Live HV PTWs</span></a>
@@ -549,7 +558,7 @@ function record(){
     body = fields([['AP no.',mono(r.id)],['Name',esc(r.name)],['Role',esc(r.role)],['Authorised for',esc(r.auth)],['Voltage levels',esc(r.voltage),1],['Company',esc(r.company)],['Phone',r.phone ? mono(r.phone) : '<span class="missing-contact">Not recorded</span>'],['Email',r.email ? mono(r.email) : '<span class="missing-contact">Not recorded</span>'],['ID06 card',mono(r.id06)],['Authorised by',esc(r.authBy)],['Authorisation date',mono(r.authDate)],['Authorised until',mono(r.expiry)],['Status',chip(r.status)],['Notes',esc(r.notes),1]]);
     side = `<div class="panel cppanel"><h3>Contact</h3>${personCard(r,'ap',false)}</div><div class="panel"><h3>Documents issued or cancelled</h3>${docs.length ? linkList(docs.map(d => d.id)) : '<p>None recorded</p>'}</div>`;
   }
-  document.title = `${r.id} · Powertec Isolation & Document Control`;
+  document.title = `${r.id} · Powertec Isolation & Safety Document Control`;
   const hero = `<section class="hero"><span class="orb" aria-hidden="true"></span><div class="wrap">
     <nav class="crumbs"><a href="${U('index.html')}">Home</a><span>/</span><a href="${U(p.file)}">${p.title}</a><span>/</span><span>${esc(r.id)}</span></nav>
     <div class="rec-head"><div><div class="rec-id">${esc(r.id)}${r.local ? ' · issued on this device' : ''}</div><h1 style="font-size:clamp(28px,4.4vw,46px)">${esc(title)}</h1></div>${r.status ? chip(r.status) : ''}</div>

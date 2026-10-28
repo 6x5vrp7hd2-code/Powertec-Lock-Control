@@ -715,3 +715,28 @@ a.lockpill:hover{background:rgba(255,255,255,.1)}
 .security-caution{margin-top:16px;max-width:75ch}
 @media(max-width:650px){.hero.home{padding-top:calc(120px + env(safe-area-inset-top,0px))}.home-brand-intro{margin-bottom:75px}.home-brand-logo{width:155px}.home-brand-services{font-size:8px;letter-spacing:.12em}.home-system-title{margin-left:0}.hero.home .home-expiry-position{margin-left:0}.security-grid{grid-template-columns:1fr}.security-document{flex-direction:column;align-items:flex-start}.site-head .brand-logo{width:65px}.site-head .brand-name{max-width:150px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.home-brand-intro *,.home-system-title,.hero.home .home-expiry-position{animation:none!important;opacity:1!important;transform:none!important}}
+
+/* Version 11 — restrained home header, revised navigation and entrance sequence */
+.site-head.home-header .wrap > a{display:none!important}
+.site-head.home-header .wrap{justify-content:flex-end}
+.home-brand-logo{width:clamp(196px,32.4vw,290px)!important;animation:pt-brand-reveal 2.6s .35s ease-out both!important}
+.home-brand-services{animation:pt-brand-reveal 1.25s 3.05s ease-out both!important}
+.home-system-title{animation:pt-brand-reveal 1.15s 4.3s ease-out both!important}
+.hero.home .home-expiry-position{animation:pt-brand-reveal 1s 5.15s ease-out both!important}
+.menu{background:#0d151f;color:#eef4f9}
+.menu nav{max-width:960px;margin:22px auto 0;gap:0}
+.menu nav .menu-primary,.menu nav .menu-group>summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font:600 clamp(16px,2vw,21px)/1.4 Montserrat,Arial,sans-serif!important;letter-spacing:.025em;text-transform:none;padding:13px 10px;border-bottom:1px solid #293d50;color:#f2f5f8;text-decoration:none;list-style:none}
+.menu nav .menu-group>summary::-webkit-details-marker{display:none}
+.menu nav .menu-group>summary::marker{content:''}
+.menu nav .menu-group{border:0;background:transparent}
+.menu nav .menu-group[open]{background:#122338}
+.menu nav .menu-group[open]>summary{color:#73b8e8;border-bottom-color:#315370}
+.menu-chevron{color:#73b8e8;transition:transform .2s}
+.menu-group[open] .menu-chevron{transform:rotate(180deg)}
+.menu-subitems{padding:5px 10px 11px 24px;background:#102033}
+.menu nav a.menu-sub-link{font:400 clamp(13px,1.6vw,16px)/1.4 Montserrat,Arial,sans-serif!important;letter-spacing:0;text-transform:none;color:#c5d6e5;padding:11px 10px;border-bottom:1px solid #24394c}
+.menu nav a.menu-sub-link:hover,.menu nav a.menu-sub-link[aria-current="page"]{color:#22c7e8;padding-left:14px}
+.menu nav a.menu-primary:hover,.menu nav a.menu-primary[aria-current="page"]{color:#22c7e8;padding-left:14px}
+.menu nav .menu-cyber{margin-top:18px;border-top:1px solid #315370;color:#73b8e8}
+@media(max-width:650px){.home-brand-logo{width:209px!important}.menu nav .menu-primary,.menu nav .menu-group>summary{font-size:17px!important}.menu nav a.menu-sub-link{font-size:14px!important}}
+@media(prefers-reduced-motion:reduce){.home-brand-logo,.home-brand-services,.home-system-title,.hero.home .home-expiry-position{animation:none!important;opacity:1!important;transform:none!important}}

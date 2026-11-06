@@ -1,7 +1,7 @@
-# Powertec Isolation Control · Version 7
+# Powertec Isolation Control · Version 8 (demo)
 
 AP office key, lock and safety document control in the Powertec Training style.
-The footer of every page ends "Version 7", so you can check the live site is up to date.
+The footer of every page ends "Version 8", so you can check the live site is up to date.
 All files sit in one folder. There are no sub-folders.
 
 ## Upload to GitHub (works on a phone)
@@ -11,6 +11,25 @@ All files sit in one folder. There are no sub-folders.
 3. Delete the old files first, especially `references-*.jpg`, `sld-tier4.jpg` and `sld-hyperscale.jpg`, which are no longer used.
 4. Tap **Add file → Upload files → choose your files**, select every file, tap **Open**, then **Commit changes**.
 5. **Settings → Pages → Deploy from a branch → main → / (root) → Save**.
+
+## Version 8 additions (demonstration)
+
+- **Document requests** (`requests.html`, `request-new.html`, `request.html`): contractor request, AP or SAP review, four outcomes, and a link
+  from the accepted request to the issued safety document. A safety document can only start from an accepted request.
+- **Daily programme** (`programme.html`): the Lead SAP or Control Engineer drafts and publishes each day's activities. The AP office sees the
+  published revision only.
+- **Clearance deadlines** (`clearance.html`): documents to clear before an activity. A deadline never cancels a document.
+- **Equipment availability** (`equipment.html`): planning status per item, with its requests, documents, keys and activities.
+- **Programme check**: runs at review and again at issue. An unresolved conflict blocks both. Only the Lead SAP or Control Engineer can record a
+  resolution, with a reason.
+- **View as menu**: switches between Contractor, AP / SAP, Lead SAP / Control Engineer and Management to show each view. It is not a login and
+  provides no security.
+
+The equipment connection map in `app.js` (`joinEq`, `GROUPS`) comes from the HV network description and must be checked against the approved site
+drawings. LV plant is matched by name only until its connections are added.
+
+Everything still saves in one browser only. Live use needs a shared database, individual logins, server-side permissions, audit records and an
+agreed outage procedure, and must not run on GitHub Pages.
 
 ## Lock colours
 

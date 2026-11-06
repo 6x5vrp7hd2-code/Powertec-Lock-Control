@@ -31,6 +31,12 @@ drawings. LV plant is matched by name only until its connections are added.
 Everything still saves in one browser only. Live use needs a shared database, individual logins, server-side permissions, audit records and an
 agreed outage procedure, and must not run on GitHub Pages.
 
+## Cabinets
+
+Four cabinets stand together: Cabinet 1 HV keys, Cabinet 2 LV keys, Cabinet 3 lockout boxes, and Cabinet 4 the red box lock key while that box is in
+use. Each AP and SAP signs for their own copy of the Cabinet 4 key. It is theirs and they must guard it. The CP's green lock goes on as the document
+is issued, as part of the same process.
+
 ## Lock colours
 
 | Lock | Colour | Numbers |

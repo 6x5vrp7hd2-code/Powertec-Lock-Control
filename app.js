@@ -1,4 +1,4 @@
-/* Powertec Isolation & Safety Document Control — shared script, Version 7.
+/* Powertec Isolation & Safety Document Control — shared script, Version 8.
    Every page loads this file. It draws the header, menu and footer, then builds the page
    named in <body data-page="...">. Records are initial example records for testing and must be
    replaced with verified site records before operational use.
@@ -28,7 +28,7 @@ const LOCKS = [["H-001", 1, "hvring", "HV", "UMS01", "VCB01 MCB1 incomer · circ
    AP register: the real site AP list replaces these placeholder rows. Every field shown on the
    AP pages and in the issuing AP menu comes from here. */
 const AP_LIST = [
-  {id:'AP01',name:'AP01 (placeholder)',role:'SAP',auth:'HV and LV',voltage:'HV to 22 kV · LV',company:'To be confirmed',phone:'',email:'',id06:'',authBy:'Site Authorising Engineer',authDate:'',expiry:'',status:'Active',notes:'Replace with the site AP list'},
+  {id:'AP01',name:'AP01 (placeholder)',role:'SAP',lead:true,auth:'HV and LV',voltage:'HV to 22 kV · LV',company:'To be confirmed',phone:'',email:'',id06:'',authBy:'Site Authorising Engineer',authDate:'',expiry:'',status:'Active',notes:'Replace with the site AP list'},
   {id:'AP02',name:'AP02 (placeholder)',role:'AP',auth:'HV and LV',voltage:'HV to 22 kV · LV',company:'To be confirmed',phone:'',email:'',id06:'',authBy:'AP01',authDate:'',expiry:'',status:'Active',notes:'Replace with the site AP list'},
   {id:'AP03',name:'AP03 (placeholder)',role:'AP',auth:'LV',voltage:'LV',company:'To be confirmed',phone:'',email:'',id06:'',authBy:'AP01',authDate:'',expiry:'',status:'Active',notes:'Replace with the site AP list'},
   {id:'AP04',name:'AP04 (placeholder)',role:'AP',auth:'LV',voltage:'LV',company:'To be confirmed',phone:'',email:'',id06:'',authBy:'AP01',authDate:'',expiry:'',status:'Active',notes:'Replace with the site AP list'}
@@ -39,6 +39,7 @@ const CP_LIST = Array.from({length:50}, (_, i) => {
   return {id, name:`CP${n}`, company:'To be confirmed', phone:'', email:'', id06:'', scope:'To be confirmed', trained:'', authBy:'', expiry:'', status:'Active'};
 });
 
+function stamp(d = new Date()){ const p = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
 /* ---------- Safety documents (initial example records) ----------
    Lockout box status, key status and personal lock positions are all worked out from these
    documents, so issuing and cancelling always keep every register in step. */
@@ -56,11 +57,13 @@ const DOCS = {
     {id:'SFT-2026-0001',status:'Live',sys:'LV',work:'Insulation resistance test, cable RPP B2 to Row PDU B2',test:'Insulation resistance, 1000 V DC',loc:'Data hall 2',ap:'AP03',cp:'CP21',plocks:['CP21'],keys:['L-041','L-053'],box:'LB03',issued:'2026-10-27 09:20',expiry:'2026-10-28 16:00'}
   ],
   loa: [
+    {id:'LOA-2026-0047',status:'Live',area:'Colo 2 · Cell 3',reason:'Live equipment next to the work area',ap:'AP02',holder:'CP32',bounds:'Barrier and signage at the boundary; no entry beyond',issued:stamp(new Date(Date.now()-864e5)),expiry:stamp(new Date(Date.now()+864e5)),ptw:''},
     {id:'LOA-2026-0046',status:'Live',area:'Battery room B',reason:'Visual inspection, no contact',ap:'AP04',holder:'CP31',bounds:'Inspection walkway only; panel and rack doors stay shut',issued:'2026-10-27 10:00',expiry:'2026-10-27 14:00',ptw:''},
     {id:'LOA-2026-0045',status:'Live',area:'LV switchroom B, bays 1 to 4',reason:'Live equipment next to the work area',ap:'AP03',holder:'CP30',bounds:'Barrier and signage at the boundary; no entry beyond',issued:'2026-10-27 07:15',expiry:'2026-10-28 18:00',ptw:'LVPTW-2026-0001'}
   ]
 };
 const LOGS = {
+  'LOA-2026-0047':[['07:15','LOA issued to CP32 by AP02']],
   'HVPTW-2026-0001':[['07:05','Switching programme checked against the HV ring main drawing by AP01'],['07:12','Keys H-159, H-160 drawn; tags hung on hooks C1-159, C1-160'],['07:24','UPM C2-3 VCB opened and racked out, earth switch closed, locks applied'],['07:30','Keys placed in LB01, box locked with red box lock LB01, key held by AP01, HV PTW issued to CP7'],['07:32','Green personal locks CP07, CP08 applied to LB01']],
   'HVPTW-2026-0002':[['10:30','Keys H-061, H-062 drawn by AP02; status With AP'],['10:32','HV switching in progress']],
   'HVPTW-2026-0000':[['24 Oct 07:30','HV PTW issued, keys in LB04'],['24 Oct 16:45','Cancelled by AP02. Personal locks removed, keys returned to hooks, LB04 returned to bay']],
@@ -106,7 +109,6 @@ const STORE = 'pt-events-v7';
 function loadEvents(){ try { return JSON.parse(localStorage.getItem(STORE) || '[]'); } catch(_) { return []; } }
 function saveEvents(ev){ try { localStorage.setItem(STORE, JSON.stringify(ev)); return true; } catch(_) { return false; } }
 function addEvent(e){ const ev = loadEvents(); ev.push(e); return saveEvents(ev); }
-function stamp(d = new Date()){ const p = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
 const hhmm = s => String(s).slice(11);
 function applyEvent(e){
   if(e.op === 'create'){
@@ -187,10 +189,10 @@ const apName = id => { const a = apById(id); return a ? `${a.name} · ${a.role}`
 const apLink = id => { const a = apById(id); return a ? `<a class="plink" href="${recUrl(a.id)}">${esc(a.name)}</a> · ${esc(a.role)}` : esc(id || '—'); };
 const cpLink = id => { const c = cpById(id); return c ? `<a class="plink" href="${recUrl(c.id)}">${esc(c.name)}</a> ${pill(c.id)}` : esc(id || 'Not yet issued'); };
 function chipClass(s){
-  if(['In cabinet','Active'].includes(s)) return 's-good';
-  if(['Expired','Out of service'].includes(s)) return 's-crit';
-  if(['Suspended','With AP','Pending issue'].includes(s)) return 's-warn';
-  if(['Live','In use','In lockout box','On a box'].includes(s)) return 's-hot';
+  if(['In cabinet','Active','Accepted for planning','No conflict recorded','No documents recorded','Available for assessment','Override recorded'].includes(s)) return 's-good';
+  if(['Expired','Out of service','Declined','Conflict','Overdue','Restricted'].includes(s)) return 's-crit';
+  if(['Suspended','With AP','Pending issue','New','Under review','Information required','Review link','Not checked','Due soon','Planned isolation','Planned energisation','Reserved for commissioning'].includes(s)) return 's-warn';
+  if(['Live','In use','In lockout box','On a box','Document issued','Under active safety document','Energisation','Isolation'].includes(s)) return 's-hot';
   return 's-idle';
 }
 const chip = s => `<span class="chip ${chipClass(s)}">${esc(s)}</span>`;
@@ -209,11 +211,15 @@ const recipientId = d => d.cp || d.holder || '';
 function shell(page, heroHtml, mainHtml){
   const item = (href,label,key) => `<a class="menu-sub-link" href="${U(href)}"${key===page?' aria-current="page"':''}>${label}</a>`;
   const group = (label, links) => `<details class="menu-group"${links.some(x=>x[2]===page)?' open':''}><summary>${label}<span class="menu-chevron" aria-hidden="true">⌄</span></summary><div class="menu-subitems">${links.map(x=>item(...x)).join('')}</div></details>`;
-  const nav = `<a class="menu-primary" href="${U('expired.html')}"${page==='expired'?' aria-current="page"':''}>Expired documents</a>
-    <a class="menu-primary" href="${U('registers.html')}"${page==='registers'?' aria-current="page"':''}>Control centre</a>
-    <a class="menu-primary" href="${U('index.html')}#site-dashboard">Site dashboard</a>
+  const primary = (href,label,key) => `<a class="menu-primary" href="${U(href)}"${key===page?' aria-current="page"':''}>${label}</a>`;
+  const reqLinks = ROLE === 'mgmt' ? [['requests.html','Request register','requests']] : [['requests.html','Request register','requests'],['request-new.html','New request','requestnew']];
+  const nav = ROLE === 'contractor' ? `${primary('index.html','Home','home')}${primary('requests.html','My document requests','requests')}${primary('request-new.html','New request','requestnew')}` :
+    `${primary('registers.html','Control centre','registers')}
+    ${group('Daily operational control', [['programme.html','Daily programme','programme'],['clearance.html','Clearance deadlines','clearance'],['equipment.html','Equipment availability','equipment']])}
+    ${group('Document requests', reqLinks)}
+    ${primary('expired.html','Expired documents','expired')}
     ${group('Safety documents', [['hvptw.html','HV permit to work','hvptw'],['lvptw.html','LV permit to work','lvptw'],['sft.html','Sanction for test','sft'],['loa.html','Limitation of access','loa']])}
-    ${group('Personal lock register', [['ap.html','AP register','ap'],['cp.html','CP register','cp']])}
+    ${group('People', [['ap.html','AP register','ap'],['cp.html','CP register','cp']])}
     ${group('Trackers', [['info.html','Information tracker','info'],['keys.html','Key tracker','keys']])}
     ${group('System resources', [['procedure.html','System procedure','procedure'],['lv-schematic.html','Drawings','schematic']])}
     <a class="menu-primary menu-cyber" href="${U('security.html')}"${page==='security'?' aria-current="page"':''}>Cybersecurity &amp; information assurance</a>`;
@@ -231,13 +237,15 @@ function shell(page, heroHtml, mainHtml){
   <main>${page === 'home' ? '' : '<div class="wrap universal-back"><button type="button" class="back-nav" id="pageBack" aria-label="Go back to the previous page">← Back</button></div>'}${mainHtml}</main>
   <footer class="site-foot"><div class="wrap">
     <a class="foot-brand" href="${U('index.html')}"><img src="mark.png" alt=""><span><b>powertec</b></span></a>
-    <div class="foot-links">
+    <div class="foot-links">${ROLE === 'contractor' ? `<div class="foot-col"><h3>Requests</h3><a href="${U('requests.html')}">My document requests</a><a href="${U('request-new.html')}">New request</a></div>` : `
+      <div class="foot-col"><h3>Daily control</h3><a href="${U('programme.html')}">Daily programme</a><a href="${U('clearance.html')}">Clearance deadlines</a><a href="${U('equipment.html')}">Equipment availability</a><a href="${U('requests.html')}">Document requests</a></div>
       <div class="foot-col"><h3>Registers</h3><a href="${U('keys.html')}">Key tracker</a><a href="${U('info.html')}">Lockout boxes</a><a href="${U('ap.html')}">AP register</a><a href="${U('cp.html')}">CP register</a></div>
       <div class="foot-col"><h3>Safety documents</h3><a href="${U('hvptw.html')}">HV permit to work</a><a href="${U('lvptw.html')}">LV permit to work</a><a href="${U('sft.html')}">Sanction for test</a><a href="${U('loa.html')}">Limitation of access</a></div>
-      <div class="foot-col"><h3>Resources</h3><a href="${U('lv-schematic.html')}">Drawings</a><a href="${U('expired.html')}">Expired documents</a><a href="${U('procedure.html')}">Procedure</a><a href="${U('security.html')}">Cybersecurity &amp; information assurance</a></div>
+      <div class="foot-col"><h3>Resources</h3><a href="${U('lv-schematic.html')}">Drawings</a><a href="${U('expired.html')}">Expired documents</a><a href="${U('procedure.html')}">Procedure</a><a href="${U('security.html')}">Cybersecurity &amp; information assurance</a></div>`}
     </div>
-    <p class="foot-legal">© ${new Date().getFullYear()} Powertec Utilities Ltd. Registered in England &amp; Wales, company no. 08117942. Version 7 · Records require site verification before operational use.</p>
-  </div></footer>`;
+    <p class="foot-legal">© ${new Date().getFullYear()} Powertec Utilities Ltd. Registered in England &amp; Wales, company no. 08117942. Version 8 · Records require site verification before operational use.</p>
+  </div></footer>${roleBar()}`;
+  wireRoleBar();
   const back = document.getElementById('pageBack');
   if(back) back.addEventListener('click', () => {
     let sameSite = false;
@@ -298,7 +306,6 @@ function drawExpired(){
 
 /* ---------- Home ---------- */
 function home(){
-  const live = s => DATA[s].filter(d => d.status === 'Live').length;
   const hero = `
   <section class="hero home"><div class="wrap">
     <div class="home-brand-intro" aria-label="Powertec Utilities, Critical Infrastructure and Training">
@@ -310,12 +317,40 @@ function home(){
       <h1 class="mega">Isolation &amp;<br>Safety Document Control</h1>
       <p class="lead">Asset Isolation Registers…</p>
     </div>
-    <div class="home-expiry-position">${expiryAlert()}</div>
+    ${STAFF ? `<div class="home-expiry-position">${expiryAlert()}${clearanceAlert()}</div>` : ''}
   </div></section>`;
-  const main = `
-  <section class="block dashboard-block" id="site-dashboard"><div class="wrap">
-    <div class="dashboard-heading"><div><div class="eyebrow">Operational overview</div><h2>Site dashboard</h2><p>Document status and key custody at a glance.</p></div><a class="btn primary small" href="${U('new.html')}">+ New document</a></div>
-    <div class="dashboard-metrics" aria-label="Site status">
+  const launch = (href, tag, title, desc) => `<a class="control-centre-launch" href="${U(href)}"><span class="control-centre-launch-icon" aria-hidden="true">▦</span><span class="control-centre-launch-copy"><span class="eyebrow">${tag}</span><strong>${title}</strong><span class="control-centre-launch-desc">${desc}</span></span><span class="control-centre-launch-arrow" aria-hidden="true">→</span></a>`;
+  const main = `<section class="block dashboard-block" id="site-dashboard"><div class="wrap">${STAFF ? `${launch('registers.html','OPERATIONAL OVERVIEW','Control centre','Live status, today\'s programme and every register')}${launch('programme.html','TODAY','Daily programme','Published activities, deadlines and restrictions')}${launch('requests.html','AP OFFICE','Document requests','Requests waiting for review')}` : `${launch('requests.html','YOUR REQUESTS','My document requests','Follow the progress of your requests')}${launch('request-new.html','START HERE','New request','Request a safety document from the AP office')}`}</div></section>`;
+  shell('home', hero, main);
+  setInterval(() => { refreshExpiryAlert(); const el = document.querySelector('.clearance-alert'); if(el) el.outerHTML = clearanceAlert(); }, 15000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) refreshExpiryAlert(); });
+}
+function registersPage(){
+  const live = k => DATA[k].filter(d => d.status === 'Live').length;
+  const hero = pageHero(crumbs('<span>Control centre</span>'), 'Operational overview', 'Control centre', 'Live status, today\'s programme and every register in one place.');
+  const t = (h,a,b) => `<a href="${U(h)}"><strong>${a}</strong><span>${b}</span><i>→</i></a>`;
+  const tile = (h,n,l,hot) => `<a href="${U(h)}"${hot ? ' class="hot"' : ''}><b>${n}</b><span>${l}</span></a>`;
+  const reqs = STATE.requests, today = publishedToday(), rows = clearanceRows();
+  const nearing = rows.filter(r => r.state === 'Overdue' || r.state === 'Due soon').reduce((n, r) => n + r.must.length, 0);
+  const unresolved = reqs.filter(r => OPEN_STATUSES.includes(r.status) && unresolvedHard(r, reqCheck(r)).length).length;
+  const expired = expiredDocs().length;
+  const next = [...today].sort((a,b) => String(a.at).localeCompare(String(b.at))).filter(a => actEnd(a) >= Date.now()).slice(0,5);
+  const main = `<section class="block registers-page"><div class="wrap">
+    ${programmeBanner()}
+    <div class="dashboard-metrics cc-metrics" aria-label="Site operational status">
+      ${tile('requests.html',reqs.filter(r => r.status === 'New').length,'New document requests')}
+      ${tile('requests.html',reqs.filter(r => r.status === 'Under review').length,'Under review')}
+      ${tile('registers.html#documents',allDocs().filter(d => d.status === 'Live').length,'Active safety documents')}
+      ${tile('clearance.html',nearing,'Documents near clearance deadline',rows.some(r => r.state === 'Overdue'))}
+      ${tile('expired.html',expired,'Expired documents',expired > 0)}
+      ${tile('programme.html',today.filter(a => a.type === 'Energisation').length,'Planned energisations today')}
+      ${tile('programme.html',today.filter(a => a.type === 'Isolation').length,'Planned isolations today')}
+      ${tile('requests.html',unresolved,'Unresolved request conflicts',unresolved > 0)}
+    </div>
+    <div class="registers-intro"><div><div class="eyebrow">NEXT ON THE PROGRAMME</div><h2>Today</h2></div></div>
+    <div class="acts">${next.length ? next.map(a => actCard(a, todayKey(), false)).join('') : '<p class="empty-box">Nothing further on the published programme today.</p>'}</div>
+    <div class="registers-intro" id="documents" style="margin-top:34px"><div><div class="eyebrow">DOCUMENT AND KEY STATUS</div><h2>Registers &amp; resources</h2></div></div>
+    <div class="dashboard-metrics" aria-label="Document and key status">
       <a href="${U('hvptw.html')}"><b>${live('hvptw')}</b><span>Live HV PTWs</span></a>
       <a href="${U('lvptw.html')}"><b>${live('lvptw')}</b><span>Live LV PTWs</span></a>
       <a href="${U('sft.html')}"><b>${live('sft')}</b><span>Live SFTs</span></a>
@@ -329,27 +364,16 @@ function home(){
       <span><i class="lockpill lb">LB01</i>Lockout box locks · red · 50</span>
       <span><i class="lockpill cp">CP01</i>CP personal locks · green · 50</span>
     </div>
-    <a class="control-centre-launch" href="${U('registers.html')}"><span class="control-centre-launch-icon" aria-hidden="true">▦</span>
-      <span class="control-centre-launch-copy"><span class="eyebrow">REGISTERS</span><strong>Control centre</strong><span class="control-centre-launch-desc">All registers, people, drawings and procedures</span></span><span class="control-centre-launch-arrow" aria-hidden="true">→</span></a>
-  </div></section>`;
-  shell('home', hero, main);
-  setInterval(refreshExpiryAlert, 15000);
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) refreshExpiryAlert(); });
-}
-function registersPage(){
-  const hero = pageHero(crumbs('<span>Control centre</span>'), 'Registers', 'Control centre', 'Every register, safety document and resource in one place.');
-  const t = (h,a,b) => `<a href="${U(h)}"><strong>${a}</strong><span>${b}</span><i>→</i></a>`;
-  const main = `<section class="block registers-page"><div class="wrap">
-    <div class="registers-intro"><div><div class="eyebrow">SYSTEM NAVIGATION</div><h2>Registers &amp; resources</h2><p>Select a register to view its entries and records.</p></div></div>
     <div class="dashboard-links registers-grid">
+      ${t('requests.html','Document requests','Requests and AP review')}${t('programme.html','Daily programme','Today\'s published activities')}
+      ${t('clearance.html','Clearance deadlines','Documents to clear before activities')}${t('equipment.html','Equipment availability','Status and history by item')}
       ${t('keys.html','Key tracker','Blue HV and yellow LV safety locks')}${t('info.html','Lockout boxes','LB01 to LB50 and red box locks')}
       ${t('hvptw.html','HV permit to work','HV PTW register')}${t('lvptw.html','LV permit to work','LV PTW register')}
       ${t('sft.html','Sanction for test','SFT register')}${t('loa.html','Limitation of access','LOA register')}
       ${t('ap.html','AP register','Issuing and cancelling APs')}${t('cp.html','CP register','CP1 to CP50 and green locks')}
       ${t('expired.html','Expired documents','Live documents past expiry')}${t('lv-schematic.html','Drawings','HV network and LV drawings')}
-      ${t('new.html','New safety document','HV PTW, LV PTW, SFT or LOA')}${t('procedure.html','System procedure','Step by step')}
-    </div>
-    <a class="registers-return" href="${U('index.html')}">← Back to dashboard</a></div></section>`;
+      ${ROLE === 'mgmt' ? '' : t('new.html','New safety document','From an accepted request')}${t('procedure.html','System procedure','Step by step')}
+    </div></div></section>`;
   shell('registers', hero, main);
 }
 function ptwChooser(){
@@ -425,7 +449,7 @@ function wireCascade(onChange){
 function tracker(key){
   const p = PAGES[key], rows = DATA[key];
   const statuses = ['All', ...new Set(rows.map(r => r.status))];
-  const newType = {hvptw:'HVPTW', lvptw:'LVPTW', sft:'SFT', loa:'LOA'}[key];
+  const newType = CAN_REVIEW ? {hvptw:'HVPTW', lvptw:'LVPTW', sft:'SFT', loa:'LOA'}[key] : '';
   const hero = pageHero(crumbs(`<span>${p.title}</span>`), `Tracker · ${p.code}`, p.title, p.blurb, newType ? `<div class="cta" style="margin-top:22px"><a class="btn primary" href="${U('new.html')}?type=${newType}">+ New ${DOC_NAME[key]}</a></div>` : '');
   const main = `<section class="block"><div class="wrap">
     ${key === 'keys' ? keyCascade() : ''}
@@ -474,7 +498,7 @@ const cpPanel = (id, label) => { const c = cpById(id); return c ? `<div class="p
    An AP from the AP register confirms each check. Recording the cancellation returns the keys to
    their hooks, frees the lockout box and its red box lock, and frees every green CP lock. */
 function cancelPanel(r, set){
-  if(r.status !== 'Live' && r.status !== 'Pending issue') return '';
+  if(!CAN_REVIEW || (r.status !== 'Live' && r.status !== 'Pending issue')) return '';
   const aps = DATA.ap.filter(a => a.status === 'Active' && (set !== 'hvptw' || /HV/.test(a.auth)));
   const checks = set === 'loa'
     ? ['The LOA holder has signed for cancellation','Barriers and signage removed and the area made normal']
@@ -531,14 +555,14 @@ function record(){
   }
   if(ISO_SETS.includes(set)){
     title = r.work;
-    body = fields([[`${DOC_NAME[set]} no.`,mono(r.id)],['System',sys(r.sys)],['Work',esc(r.work),1],...(set==='sft'?[['Test',esc(r.test),1]]:[]),['Location',esc(r.loc),1],['Issued by',apLink(r.ap)],['Competent person',r.cp ? cpLink(r.cp) : 'Not yet issued'],['Issued',mono(r.issued)],['Expires',mono(r.expiry)],
+    body = fields([[`${DOC_NAME[set]} no.`,mono(r.id)],...(r.request ? [['Document request',reqLink(r.request)]] : []),['System',sys(r.sys)],['Work',esc(r.work),1],...(set==='sft'?[['Test',esc(r.test),1]]:[]),['Location',esc(r.loc),1],['Issued by',apLink(r.ap)],['Competent person',r.cp ? cpLink(r.cp) : 'Not yet issued'],['Issued',mono(r.issued)],['Expires',mono(r.expiry)],
       ['Points of isolation',linkList(r.keys),1],['Lockout box and red lock',r.box ? link(r.box) : ''],['Limitation of access',link(r.loa)],['Green CP locks',r.plocks && r.plocks.length ? linkList(r.plocks) : '',1],
       ...(r.cancelledBy ? [['Cancelled by',apLink(r.cancelledBy)],['Cancelled at',mono(r.cancelledAt)]] : []),...(r.notes ? [['Notes',esc(r.notes),1]] : [])]);
     side = cpPanel(r.cp,'Competent person') + cancelPanel(r, set) + logPanel(r.id);
   }
   if(set === 'loa'){
     title = r.area;
-    body = fields([['LOA no.',mono(r.id)],['Linked permit',link(r.ptw)],['Area',esc(r.area),1],['Reason',esc(r.reason),1],['Boundaries',esc(r.bounds),1],['Issued by',apLink(r.ap)],['Holder',cpLink(r.holder)],['Issued',mono(r.issued)],['Expires',mono(r.expiry)],
+    body = fields([['LOA no.',mono(r.id)],...(r.request ? [['Document request',reqLink(r.request)]] : []),['Linked permit',link(r.ptw)],['Area',esc(r.area),1],['Reason',esc(r.reason),1],['Boundaries',esc(r.bounds),1],['Issued by',apLink(r.ap)],['Holder',cpLink(r.holder)],['Issued',mono(r.issued)],['Expires',mono(r.expiry)],
       ...(r.cancelledBy ? [['Cancelled by',apLink(r.cancelledBy)],['Cancelled at',mono(r.cancelledAt)]] : []),...(r.notes ? [['Notes',esc(r.notes),1]] : [])]);
     side = cpPanel(r.holder,'LOA holder') + cancelPanel(r, set) + logPanel(r.id);
   }
@@ -611,17 +635,20 @@ function references(){ location.replace(U('lv-schematic.html')); }
 
 /* ---------- System procedure ---------- */
 const STAGES = [
+  {k:'programme',name:'Publish the daily programme',who:'Lead SAP or Control Engineer',steps:['After the morning coordination meeting, enter the agreed energisations, isolations and commissioning activities.','Set a clearance deadline where documents must be cleared first, and how long the equipment stays restricted.','Publish the programme. Republish it whenever the plan changes.'],site:'Daily programme, Clearance deadlines and Equipment availability update for the AP office.',stop:'If today\'s programme is not published, programme checks show as not checked.'},
+  {k:'request',name:'Request the document',who:'Contractor',steps:['Submit a document request with the equipment, work, RAMS reference, proposed recipient and required times.','Choose the equipment from the list so the programme check can match it.'],site:'The request appears in the AP office register as New.',stop:'A request does not permit any work or reserve any equipment.'},
+  {k:'review',name:'Review the request',who:'AP or SAP',steps:['Start the review so the rest of the AP office can see who has it.','Check the work description, RAMS, equipment and proposed recipient.','Read the programme check and any existing documents on the equipment.','Accept for planning, request information, defer or decline.'],site:'Request status updates. The contractor sees the status and your comment.',stop:'An unresolved programme conflict blocks acceptance. Only the Lead SAP or Control Engineer can record a resolution.'},
   {k:'plan',name:'Plan the isolation',who:'AP',steps:['Choose HV PTW or LV PTW. HV work uses blue HV locks only; LV work uses yellow LV locks only.','Mark the points of isolation and earthing on the drawing. Every HV isolation point and earth switch has its own blue lock number.','Open the Key tracker, pick the UMS or the colo, cell and UPM, and check every lock shows IN CABINET.','Check the CP is on the CP register and their green lock is free.'],site:'No change yet. The switching programme is ready.',stop:'Any lock not IN CABINET, or a CP whose green lock is already on another box: stop and resolve.'},
   {k:'draw',name:'Draw the keys and a lockout box',who:'AP',steps:['Take each key from its numbered hook (C1 for HV, C2 for LV).','Hang a key-out tag on each empty hook: lock no., document no., your name, time.','Take a free lockout box (LB01 to LB50) with its red box lock of the same number.'],site:'Key tracker: each key → With AP.',stop:'Every empty hook carries a tag before you leave the AP office.'},
   {k:'isolate',name:'Isolate, earth and lock',who:'AP',steps:['Carry out the switching programme in order.','Open and rack out or lock off each switch, then fit its blue (HV) or yellow (LV) lock.','Prove dead and close the earth switches; fit each earth switch lock.','Post caution and danger notices.'],site:'No change. Keys stay in the AP\'s hand.',stop:'A lock number that does not match the switch label or drawing: stop.'},
   {k:'secure',name:'Secure the keys',who:'AP',steps:['Place every isolation key in the lockout box and count them.','Lock the box with its own red box lock (box LB07, lock LB07, key LB07). Keep the red box lock key.'],site:'Key tracker: keys → In lockout box. Information tracker: box → In use.',stop:'Key count must match the switching programme exactly.'},
-  {k:'issue',name:'Issue the document',who:'AP and CP',steps:['Raise the HV PTW, LV PTW or SFT with + New safety document, picking the locks on the drawing.','Brief the CP at the point of work and issue the document.','The CP and each member of the working party fit their own green CP lock to the box.'],site:'Tracker: document → Live. CP register: green lock shown on the box.',stop:'Nobody works without their own green lock on the box.'},
+  {k:'issue',name:'Issue the document',who:'AP and CP',steps:['Raise the HV PTW, LV PTW or SFT from its accepted request, picking the locks on the drawing. The programme is checked again at this point.','Brief the CP at the point of work and issue the document.','The CP and each member of the working party fit their own green CP lock to the box.'],site:'Tracker: document → Live. CP register: green lock shown on the box.',stop:'Nobody works without their own green lock on the box.'},
   {k:'work',name:'During the work',who:'CP and working party',steps:['The CP keeps the working party within the limits of the document.','A person joining fits their green lock; a person leaving removes their own.','Nobody removes another person\'s lock, for any reason.'],site:'Information tracker: green locks on the box.',stop:'The box cannot be opened while any green lock is on it.'},
   {k:'cancel',name:'Cancel and restore',who:'CP then AP',steps:['The CP signs for cancellation and every green CP lock is removed.','The AP unlocks the red box lock and counts the keys.','Remove earths and locks and restore the system.','Return every key to its hook and the box to its bay, then record the cancellation on the document, ticking each check.'],site:'Keys → In cabinet, box → free, green CP locks → free, document → Cancelled.',stop:'Tag, hook and tracker must agree before the AP leaves the office.'}
 ];
 function procedure(){
   let n = 0;
-  const hero = pageHero(crumbs('<span>System procedure</span>'), 'System procedure · Step by step', 'How the system works', 'Every HV PTW, LV PTW and SFT follows the same seven stages.');
+  const hero = pageHero(crumbs('<span>System procedure</span>'), 'System procedure · Step by step', 'How the system works', `Every HV PTW, LV PTW and SFT follows the same ${STAGES.length} stages.`);
   const bar = `<div class="phasebar" style="grid-template-columns:repeat(${STAGES.length},minmax(118px,1fr))">${STAGES.map((s,i) => `<a href="#stage-${s.k}"><b>${i+1}</b><span>${s.name}</span><small>${s.who}</small></a>`).join('')}</div>`;
   const cards = STAGES.map((s,i) => `<article class="phase" id="stage-${s.k}"><div class="pnum">${i+1}</div><div class="pbody"><div class="pmeta"><span>Stage ${i+1} of ${STAGES.length}</span><span>Done by: ${s.who}</span></div><h3>${s.name}</h3>
     <div class="pcols"><div><h4>Steps</h4><ol class="steps-list">${s.steps.map(t => `<li><span class="sn">${++n}</span><span>${esc(t)}</span></li>`).join('')}</ol></div><div><h4>On this site</h4><p class="site-note">${esc(s.site)}</p></div></div><p class="gate"><b>Stop check</b>${esc(s.stop)}</p></div></article>`).join('');
@@ -652,9 +679,13 @@ function expiryFrom(v){ const d = new Date(); if(v === 'eos'){ d.setHours(18,0,0
 const TYPES = [['HV permit to work (HV PTW)','HVPTW'],['LV permit to work (LV PTW)','LVPTW'],['Sanction for test (SFT)','SFT'],['Limitation of access (LOA)','LOA']];
 function newDoc(){
   const qType = (new URLSearchParams(location.search).get('type') || '').toUpperCase();
-  const hero = pageHero(crumbs('<span>New safety document</span>'), 'Issue · HV PTW · LV PTW · SFT · LOA', 'New safety document', 'Choose each item from its list. Only free locks, free lockout boxes and CPs whose green lock is free can be chosen.');
+  const hero = pageHero(crumbs('<span>New safety document</span>'), 'Issue · HV PTW · LV PTW · SFT · LOA', 'New safety document', 'Start from an accepted document request. Only free locks, free lockout boxes and CPs whose green lock is free can be chosen.');
   const main = `<section class="block"><div class="wrap">
     <form class="docform" id="docform" novalidate>
+      <div class="fgroup"><h3>Accepted request</h3><div class="fgrid">
+        <label class="f wide"><span>Document request * <small>A safety document can only start from a request accepted for planning.</small></span><select id="f-req">${opts(STATE.requests.filter(r => r.status === 'Accepted for planning').map(r => [`${r.id} · ${docTypeShort(r.doc)} · ${r.company} · ${r.equip.map(eqName).join(', ')}`, r.id]), 'Choose an accepted request')}</select></label>
+        <div class="f wide req-summary" id="reqSummary" hidden></div>
+      </div></div>
       <div class="fgroup"><h3>1 · Document</h3><div class="fgrid">
         <label class="f"><span>Document type *</span><select id="f-type">${opts(TYPES,'Choose a document type')}</select></label>
         <label class="f" data-for="HVPTW LVPTW SFT"><span>Work *</span><select id="f-work"></select></label>
@@ -686,6 +717,7 @@ function newDoc(){
         <label class="f"><span>Valid for *</span><select id="f-dur">${opts(OPTIONS.duration,'Choose how long')}</select></label>
         <label class="f wide"><span>Notes <small>Optional</small></span><textarea id="f-notes" rows="3" maxlength="500"></textarea></label>
       </div></div>
+      <div id="progCheck"></div>
       <div class="errors" id="errors" role="alert" hidden></div>
       <div class="formfoot"><button type="submit" class="btn primary">Issue document ${I.arrow}</button><a class="btn ghost" href="${U('index.html')}">Cancel</a></div>
       <p class="hint">Documents issued here are saved on this phone or computer only.</p>
@@ -728,6 +760,44 @@ function newDoc(){
   function fillLocks(){
     $('pickedLocks').innerHTML = locks.map(id => { const k = find(id).r; return `<li>${pill(id)}<span class="pl">${esc(k.board)} · ${esc(k.point)} <em>${esc(DRAWINGS[k.dw].title)}</em></span><button type="button" data-rm-lock="${id}" aria-label="Remove ${id}">×</button></li>`; }).join('');
     $('noLocks').hidden = locks.length > 0;
+    refreshProg();
+  }
+  function issueCheck(){
+    const r = reqById($('f-req').value); if(!r) return null;
+    const from = Date.now(), to = $('f-dur').value ? expiryMillis(expiryFrom($('f-dur').value)) : from + 8 * 3600e3;
+    const c = conflictCheck(makeTouch([...r.equip, ...areaEquip($('f-area').value)], locks), from, to), ok = overriddenSigs(r), today = todayKey();
+    return {r, c, hard:c.items.filter(i => isHard(i.rel) && !ok.has(i.sig)), soft:c.items.filter(i => !isHard(i.rel)), noProg:!isPublished(today) && !ok.has(`unpublished:${today}`), today};
+  }
+  function refreshProg(){
+    const box = $('progCheck'), k = issueCheck(); if(!box) return;
+    if(!k){ box.innerHTML = ''; return; }
+    const ack = box.querySelector('#progAck'), acked = ack && ack.checked;
+    const sigs = [...k.hard.map(i => i.sig), ...(k.noProg ? [`unpublished:${k.today}`] : [])], blocked = sigs.length > 0;
+    box.innerHTML = `<div class="fgroup"><h3>Programme check at issue</h3>
+      ${k.noProg ? `<p class="notice-warn"><b>Today's programme has not been published.</b> This document cannot be issued until it is published or the Lead SAP or Control Engineer records a resolution.</p>` : ''}
+      ${k.c.items.length ? `<ul class="conflicts">${k.c.items.map(i => `<li class="${k.hard.includes(i) ? 'hard' : isHard(i.rel) ? 'done' : 'soft'}"><b>${esc(i.a.title)}</b><span>${esc(REL_TEXT[i.rel.level])}: ${esc(relDetail(i.rel))}</span><span>Restricted ${esc(shortStamp(i.a.clearBy || i.a.at))} to ${esc(shortStamp(i.a.until))}${k.hard.includes(i) || !isHard(i.rel) ? '' : ' · resolution recorded'}</span></li>`).join('')}</ul>` : !k.noProg ? '<p class="hint">No conflict recorded for this equipment and time on the published programme.</p>' : ''}
+      ${k.soft.length ? `<ul class="checks cancel-checks"><li><label><input type="checkbox" id="progAck"${acked ? ' checked' : ''}><span>I have reviewed the linked ${k.soft.length === 1 ? 'item' : 'items'} on the same network</span></label></li></ul>` : ''}
+      ${blocked && !IS_LEAD ? `<p class="hint" style="margin-top:10px">Ask the Lead SAP or Control Engineer to resolve this before issue.</p>` : ''}
+      ${blocked && IS_LEAD ? overrideHtml(sigs, 'This document cannot be issued until the conflict is resolved.') : ''}</div>`;
+    wireOverride(k.r, sigs, refreshProg);
+  }
+  function applyRequest(){
+    const r = reqById($('f-req').value), sum = $('reqSummary');
+    $('f-type').disabled = !!r; sum.hidden = !r;
+    if(r){
+      sum.innerHTML = `<div class="req-card"><b>${reqLink(r.id)} · ${esc(r.company)}</b><span>${esc(r.work)}</span><span>${esc(r.equip.map(eqName).join(', '))}</span><span>Required ${esc(shortStamp(r.start))} to ${esc(shortStamp(r.end))} · RAMS ${esc(r.rams || 'not provided')}</span></div>`;
+      $('f-type').value = r.doc; show();
+      const setSel = (id, v) => { const el = $(id); if(!v) return; if(![...el.options].some(o => o.value === v)) el.add(new Option(v, v), 1); el.value = v; };
+      if(r.doc === 'LOA'){ setSel('f-area', r.location); }
+      else {
+        setSel('f-work', r.work); setSel('f-loc', r.location);
+        if(r.doc === 'SFT'){ const kinds = [...new Set(r.equip.map(id => EQUIP.get(id).sys))]; $('f-sys').value = kinds.length > 1 ? 'HV,LV' : kinds[0]; showSys(); }
+        r.equip.forEach(id => { const x2 = id.match(/^XFM02-C\d-(\d)$/), name = x2 ? `UMS1${x2[1]}` : eqName(id).replace(/ XFM01$/, ' UPM'), p = PLANTS.find(x => x.name === name || `LV|${x.key}` === id); if(p) $(`f-plant-${p.sys.toLowerCase()}`).value = p.key; });
+      }
+      const cpOpt = [...$('f-cp').options].find(o => o.value === r.cp && !o.disabled);
+      if(cpOpt){ $('f-cp').value = r.cp; $('f-cp').dispatchEvent(new Event('change')); }
+    }
+    refreshProg();
   }
   function fillWp(){
     const cp = $('f-cp').value;
@@ -774,10 +844,21 @@ function newDoc(){
   $('pickedWp').addEventListener('click', e => { const b = e.target.closest('[data-rm-wp]'); if(b){ wp.splice(wp.indexOf(b.dataset.rmWp),1); fillWp(); } });
   if(TYPES.some(t => t[1] === qType)) $('f-type').value = qType;
   show(); fillWp();
+  $('f-req').addEventListener('change', applyRequest);
+  $('f-dur').addEventListener('change', refreshProg); $('f-area').addEventListener('change', refreshProg);
+  const qReq = new URLSearchParams(location.search).get('request');
+  if(qReq && [...$('f-req').options].some(o => o.value === qReq)){ $('f-req').value = qReq; applyRequest(); }
   $('docform').addEventListener('submit', e => {
     e.preventDefault();
     const t = type(), err = [], need = (id, msg) => { if(!$(id).value) err.push(msg); };
+    need('f-req','Choose an accepted document request.');
     need('f-type','Choose a document type.');
+    const pc = issueCheck();
+    if(pc){
+      if(pc.noProg) err.push('Today\'s programme has not been published.');
+      if(pc.hard.length) err.push(`${pc.hard.length} programme ${pc.hard.length === 1 ? 'conflict is' : 'conflicts are'} unresolved.`);
+      if(pc.soft.length && !($('progAck') || {}).checked) err.push('Confirm you have reviewed the linked items on the same network.');
+    }
     if(t && t !== 'LOA'){
       need('f-work','Choose the work.'); if(t === 'SFT'){ need('f-test','Choose the test.'); need('f-sys','Choose HV, LV or both.'); }
       need('f-loc','Choose the location.');
@@ -792,7 +873,7 @@ function newDoc(){
     if(err.length){ box.innerHTML = `<b>Before issuing:</b><ul>${err.map(x => `<li>${x}</li>`).join('')}</ul>`; box.hidden = false; box.scrollIntoView({behavior:'smooth', block:'center'}); return; }
     box.hidden = true;
     const ap = apById($('f-ap').value), cp = cpById($('f-cp').value), now = stamp(), id = nextId(t), notes = $('f-notes').value.trim();
-    const base = {id, status:'Live', ap:ap.id, issued:now, expiry:expiryFrom($('f-dur').value), notes};
+    const base = {id, status:'Live', ap:ap.id, issued:now, expiry:expiryFrom($('f-dur').value), notes, request:pc.r.id, equip:[...pc.r.equip]};
     let doc, log;
     if(t === 'LOA'){
       doc = {...base, area:$('f-area').value, reason:$('f-reason').value, bounds:$('f-bounds').value, holder:cp.id, ptw:$('f-ptw').value};
@@ -802,6 +883,7 @@ function newDoc(){
       log = [[hhmm(now), `Keys ${locks.join(', ')} drawn by ${ap.name}; tags hung on hooks`],[hhmm(now), `Keys placed in ${doc.box}, box locked with red box lock ${doc.box}, key held by ${ap.name}. ${DOC_NAME[docSet(id)]} issued to ${cp.name}`],[hhmm(now), `Green CP locks ${plocks.join(', ')} applied to ${doc.box}`]];
     }
     if(!addEvent({op:'create', doc, log})){ box.innerHTML = '<b>Could not save.</b> This browser is blocking storage, for example in a private window.'; box.hidden = false; return; }
+    pc.r.status = 'Document issued'; pc.r.docId = id; pc.r.log.push([now, ap.name, `${DOC_NAME[docSet(id)]} ${id} issued to ${cp.name}`]); saveState();
     location.href = recUrl(id) + '&created=1';
   });
 }
@@ -826,11 +908,596 @@ function securityPage(){
   shell('security',hero,main);
 }
 
+/* ---------- Version 8: demonstration roles ----------
+   The role switcher shows how the system would behave for each user. It is not a login and gives no
+   security: live use needs a shared database, individual logins and server-side permissions. */
+const ROLES = {contractor:'Contractor (Contractor A)', ap:'AP / SAP', lead:'Lead SAP / Control Engineer', mgmt:'Management (view only)'};
+const ROLE_KEY = 'pt-role-v8', V8_KEY = 'pt-v8-state';
+const ROLE = (() => { try { const r = localStorage.getItem(ROLE_KEY); return ROLES[r] ? r : 'ap'; } catch(_) { return 'ap'; } })();
+const STAFF = ROLE !== 'contractor', CAN_REVIEW = ROLE === 'ap' || ROLE === 'lead', IS_LEAD = ROLE === 'lead';
+const CONTRACTOR_PAGES = new Set(['home','requests','requestnew','requestrec','security']);
+const MY_COMPANY = 'Contractor A', CONTRACTORS = ['Contractor A','Contractor B','Contractor C'];
+function roleBar(){
+  return `<div class="rolebar" role="region" aria-label="Demonstration role"><span class="rolebar-tag">Demo · example data</span>
+    <label><span>View as</span><select id="roleSelect">${Object.entries(ROLES).map(([k,v]) => `<option value="${k}"${k===ROLE?' selected':''}>${esc(v)}</option>`).join('')}</select></label>
+    <button type="button" id="resetDemo">Reset demo</button></div>`;
+}
+function wireRoleBar(){
+  document.getElementById('roleSelect').addEventListener('change', e => { try { localStorage.setItem(ROLE_KEY, e.target.value); } catch(_){} location.href = U('index.html'); });
+  document.getElementById('resetDemo').addEventListener('click', () => {
+    if(!confirm('Reset the demo? This clears requests, programmes and documents made on this device and reloads the example data.')) return;
+    try { localStorage.removeItem(V8_KEY); localStorage.removeItem(STORE); } catch(_){}
+    location.href = U('index.html');
+  });
+}
+function restrictedPage(){
+  shell('', pageHero(crumbs('<span>Not available</span>'), 'Access', 'Not available in this role', 'This page is not available to this role. Use the View as menu at the bottom of the screen to change role.'), '');
+}
+
+/* ---------- Equipment and how it connects ----------
+   Built from the HV network description. Conflict checks are only as good as this map, so it must be
+   checked against the approved site drawings before live use. LV plant is matched by name only until
+   the LV connections are mapped. */
+const CELLS = [1,2,3,4,5].flatMap(c => [1,2,3,4].map(n => ({c, n, code:`C${c}-${n}`, name:`Colo ${c} · Cell ${n}`}))).concat([{c:1, n:'ADM', code:'C1-ADM', name:'Colo 1 · Admin', admin:true}]);
+const EQUIP = new Map();
+const addEq = (id, name, group, eqSys) => EQUIP.set(id, {id, name, group, sys:eqSys});
+['UMS01','UMS02','UMS03','UMS11','UMS12','UMS13','UMS14'].forEach(u => addEq(u, u, 'Main substations (UMS)', 'HV'));
+[1,2,3,4,5].forEach(c => addEq(`RING${c}`, `Colo ${c} ring`, `Colo ${c}`, 'HV'));
+CELLS.forEach(x => {
+  addEq(`UPM-${x.code}`, `${x.name} UPM`, `Colo ${x.c}`, 'HV');
+  addEq(`XFM01-${x.code}`, `${x.name} XFM01`, `Colo ${x.c}`, 'HV');
+  if(!x.admin) addEq(`XFM02-${x.code}`, `${x.name} XFM02`, `Colo ${x.c}`, 'HV');
+});
+PLANTS.filter(p => p.sys === 'LV').forEach(p => addEq(`LV|${p.key}`, p.name, `LV · ${DRAWINGS[p.dw].title}`, 'LV'));
+const eqName = id => (EQUIP.get(id) || {name:id}).name;
+const ADJ = new Map(), GROUPS = [];
+const joinEq = (a, b) => { [[a,b],[b,a]].forEach(([x,y]) => { if(!ADJ.has(x)) ADJ.set(x, new Set()); ADJ.get(x).add(y); }); };
+[1,2,3,4,5].forEach(c => {
+  joinEq('UMS01', `RING${c}`); joinEq('UMS02', `RING${c}`);
+  const cells = CELLS.filter(x => x.c === c);
+  cells.forEach(x => { joinEq(`RING${c}`, `UPM-${x.code}`); joinEq(`UPM-${x.code}`, `XFM01-${x.code}`); });
+  GROUPS.push({name:`Colo ${c} HV ring`, ids:new Set(['UMS01','UMS02',`RING${c}`, ...cells.flatMap(x => [`UPM-${x.code}`,`XFM01-${x.code}`])])});
+});
+joinEq('UMS02','UMS03'); joinEq('UMS02','UMS11'); joinEq('UMS11','UMS12'); joinEq('UMS12','UMS13'); joinEq('UMS13','UMS14');
+[1,2,3,4].forEach(n => {
+  const u = `UMS1${n}`, feed = CELLS.filter(x => x.n === n).map(x => `XFM02-${x.code}`);
+  joinEq('UMS03', u); feed.forEach(id => joinEq(u, id));
+  GROUPS.push({name:`Cell ${n} XFM02 feeders`, ids:new Set(['UMS03', u, ...feed])});
+});
+/* What a lock, list of equipment or document touches.
+   direct: names that count as the same equipment. expand: names whose connections are followed. */
+function keyTouch(id){
+  const k = DATA.keys.find(x => x.id === id), out = {direct:[], expand:[]};
+  if(!k) return out;
+  if(k.sys === 'LV'){ const e = `LV|${k.dw}|${k.board}`; return {direct:[e], expand:[e]}; }
+  const m = k.meta || {};
+  if(m.g === 'UPM'){ const u = `UPM-${m.upm}`; return {direct: m.sw === 'VCB' ? [u, `XFM01-${m.upm}`] : [u], expand:[u]}; }
+  let dest = '', t;
+  if((t = k.point.match(/FCB Colo (\d) ring/))) dest = `RING${t[1]}`;
+  else if((t = k.point.match(/FCB Colo (\d) cell (\d) XFM02/))) dest = `XFM02-C${t[1]}-${t[2]}`;
+  else if((t = k.point.match(/(?:FCB to|Loop out to|feeder to) (UMS\d\d)/))) dest = t[1];
+  return dest ? {direct:[k.board, dest], expand:[dest]} : {direct:[k.board], expand:[k.board]};
+}
+function areaEquip(a){
+  a = String(a || '');
+  if(EQUIP.has(a)) return [a];
+  const x = CELLS.find(c => c.name === a);
+  return x ? [`UPM-${x.code}`,`XFM01-${x.code}`, ...(x.admin ? [] : [`XFM02-${x.code}`])] : [];
+}
+function makeTouch(equip = [], keys = []){
+  const direct = new Set(equip), expand = new Set(equip);
+  keys.forEach(id => { const t = keyTouch(id); t.direct.forEach(x => direct.add(x)); t.expand.forEach(x => expand.add(x)); });
+  return {direct, expand};
+}
+const docTouch = d => makeTouch([...(d.equip || []), ...areaEquip(d.area)], d.keys || []);
+/* direct = same equipment · connected = one connection away · linked = same ring or feeder group */
+function relation(touch, equipList){
+  let best = null;
+  const rank = {direct:3, connected:2, linked:1};
+  const take = (level, on, via) => { if(!best || rank[level] > rank[best.level]) best = {level, on, via}; };
+  equipList.forEach(n => {
+    if(touch.direct.has(n)){ take('direct', n, ''); return; }
+    const near = ADJ.get(n);
+    if(near){ for(const e of touch.expand) if(near.has(e)){ take('connected', n, e); break; } }
+    for(const g of GROUPS){ if(g.ids.has(n)){ for(const e of touch.expand) if(g.ids.has(e)){ take('linked', n, g.name); break; } } }
+  });
+  return best;
+}
+const REL_TEXT = {direct:'Same equipment', connected:'Directly connected', linked:'Same network'};
+const relDetail = r => r.level === 'direct' ? eqName(r.on) : r.level === 'connected' ? `${eqName(r.on)} is directly connected to ${eqName(r.via)}` : `${eqName(r.on)} · ${r.via}`;
+const isHard = r => r.level === 'direct' || r.level === 'connected';
+
+/* ---------- Saved demo data (this device) ---------- */
+const dayOf = ms => stamp(new Date(ms)).slice(0,10);
+const todayKey = () => dayOf(Date.now());
+const dayLabel = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d).toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'}); };
+const toInput = s => String(s || '').replace(' ', 'T');
+const fromInput = s => String(s || '').replace('T', ' ');
+const shortStamp = s => { if(!s) return '—'; return String(s).slice(0,10) === todayKey() ? String(s).slice(11) : String(s).slice(8,10) + '/' + String(s).slice(5,7) + ' ' + String(s).slice(11); };
+function seedState(){
+  const base = Date.now(), end = new Date(base); end.setHours(23,55,0,0);
+  const scale = Math.min(1, (end - base) / (7 * 3600e3)), start = new Date(base); start.setHours(0,0,0,0);
+  const t = min => { const d = new Date(Math.max(start.getTime(), base + min * 60000 * (min > 0 ? scale : 1))); d.setMinutes(Math.round(d.getMinutes() / 5) * 5, 0, 0); return stamp(d); };
+  const tomorrow = (h, m = 0) => { const d = new Date(base); d.setDate(d.getDate() + 1); d.setHours(h, m, 0, 0); return stamp(d); };
+  const lead = 'AP01 (placeholder)';
+  const acts = [
+    {id:'ACT-001',type:'Energisation',title:'Energise LV Main Distribution B',equip:['LV|lvt4|LV Main Distribution B'],at:t(150),clearBy:t(-15),until:t(240),owner:'Lead SAP',notes:'Example activity. Linked documents to be cleared before switching.'},
+    {id:'ACT-002',type:'Energisation',title:'Energise Colo 2 Cell 3 XFM01',equip:['XFM01-C2-3'],at:t(180),clearBy:t(40),until:t(300),owner:'Control Engineer',notes:'Example activity. Commissioning team waiting on this transformer.'},
+    {id:'ACT-003',type:'Isolation',title:'Isolate Colo 4 Cell 3 UPM',equip:['UPM-C4-3'],at:t(60),clearBy:'',until:t(360),owner:'Lead SAP',notes:'Example activity.'},
+    {id:'ACT-004',type:'Energisation',title:'Energise Colo 3 Cell 2 XFM01',equip:['XFM01-C3-2'],at:t(300),clearBy:t(170),until:t(400),owner:'Control Engineer',notes:'Example activity.'},
+    {id:'ACT-005',type:'Commissioning',title:'Load-bank testing, Colo 3 Cell 4',equip:['XFM02-C3-4'],at:t(240),clearBy:t(210),until:t(420),owner:'Lead SAP',notes:'Example activity. Equipment reserved for commissioning.'}
+  ];
+  const lg = (when, who, msg) => [when, who, msg];
+  const req = (o) => ({comment:'', reply:'', overrides:[], docId:'', location:'', rams:'', cp:'', notes:'', by:'Requester 1', contact:'+00 000 000 000', ...o});
+  return {
+    seed:base,
+    programmes:{[dayOf(base)]:{draft:JSON.parse(JSON.stringify(acts)), published:acts, rev:1, by:lead, at:t(-30), log:[[t(-30), lead, 'Revision 1 published after the coordination meeting']]}},
+    requests:[
+      req({id:'DR-2026-0047',status:'Declined',doc:'LOA',company:'Contractor C',equip:['UMS12'],location:'UMS12',work:'Survey of UMS12 cable basement',rams:'RAMS-C-118',start:t(30),end:t(120),comment:'RAMS has been superseded. Submit a new request with the current revision.',reviewer:'AP02',created:t(-300),log:[lg(t(-300),'Contractor C','Request submitted'),lg(t(-200),'AP02','Declined: RAMS has been superseded. Submit a new request with the current revision.')]}),
+      req({id:'DR-2026-0046',status:'Deferred',doc:'HVPTW',company:'Contractor B',equip:['UPM-C4-3'],location:'Colo 4 · Cell 3',work:'Vacuum ring switch maintenance',rams:'RAMS-B-204',cp:'CP14',start:t(120),end:t(300),comment:'Held until the planned isolation is complete.',reviewer:'AP02',created:t(-240),log:[lg(t(-240),'Contractor B','Request submitted'),lg(t(-120),'AP02','Deferred: held until the planned isolation is complete.')]}),
+      req({id:'DR-2026-0045',status:'Accepted for planning',doc:'HVPTW',company:'Contractor A',equip:['XFM02-C5-1'],location:'Colo 5 · Cell 1',work:'XFM02 maintenance',rams:'RAMS-A-311',cp:'CP09',start:t(30),end:t(330),reviewer:'AP01',created:t(-180),log:[lg(t(-180),'Contractor A','Request submitted'),lg(t(-60),'AP01','Review complete. Accepted for planning. This is not permission to work or authority to issue a safety document.')]}),
+      req({id:'DR-2026-0044',status:'Information required',doc:'SFT',company:'Contractor A',equip:['UPM-C5-2'],location:'Colo 5 · Cell 2',work:'VLF test on outgoing cable',rams:'',cp:'CP11',start:tomorrow(9),end:tomorrow(15),comment:'Please add the RAMS reference and the test voltage.',reviewer:'AP02',created:t(-150),log:[lg(t(-150),'Contractor A','Request submitted'),lg(t(-100),'AP02','Information requested: please add the RAMS reference and the test voltage.')]}),
+      req({id:'DR-2026-0043',status:'Under review',doc:'HVPTW',company:'Contractor C',equip:['UPM-C3-1'],location:'Colo 3 · Cell 1',work:'Protection relay replacement',rams:'RAMS-C-124',cp:'CP16',start:t(120),end:t(320),reviewer:'AP02',created:t(-90),log:[lg(t(-90),'Contractor C','Request submitted'),lg(t(-40),'AP02','Review started')]}),
+      req({id:'DR-2026-0042',status:'New',doc:'LVPTW',company:'Contractor B',equip:['LV|lvt4|ATS bank A'],location:'LV switchroom A',work:'Circuit breaker maintenance',rams:'RAMS-B-207',cp:'CP18',start:tomorrow(8),end:tomorrow(16),created:t(-30),log:[lg(t(-30),'Contractor B','Request submitted')]}),
+      req({id:'DR-2026-0041',status:'New',doc:'HVPTW',company:'Contractor A',equip:['XFM01-C2-3'],location:'Colo 2 · Cell 3',work:'XFM01 maintenance, oil sample and inspection',rams:'RAMS-A-312',cp:'CP10',start:t(60),end:t(240),created:t(-15),log:[lg(t(-15),'Contractor A','Request submitted')]})
+    ]
+  };
+}
+let STATE = null, STATE_SAVES = true;
+function loadState(){
+  try { const s = JSON.parse(localStorage.getItem(V8_KEY) || 'null'); if(s && s.requests){ STATE = s; return; } } catch(_){}
+  STATE = seedState(); saveState();
+}
+function saveState(){ try { localStorage.setItem(V8_KEY, JSON.stringify(STATE)); STATE_SAVES = true; } catch(_) { STATE_SAVES = false; } return STATE_SAVES; }
+const reqById = id => STATE.requests.find(r => r.id === id);
+const visibleRequests = () => ROLE === 'contractor' ? STATE.requests.filter(r => r.company === MY_COMPANY) : STATE.requests;
+const reqUrl = id => U(`request.html?id=${encodeURIComponent(id)}`);
+const reqLink = id => `<a class="mono" href="${reqUrl(id)}">${esc(id)}</a>`;
+const eqUrl = id => U(`equipment.html?id=${encodeURIComponent(id)}`);
+const eqLink = id => STAFF ? `<a class="plink" href="${eqUrl(id)}">${esc(eqName(id))}</a>` : esc(eqName(id));
+const leadPeople = () => DATA.ap.filter(a => a.lead && a.status === 'Active');
+const whoNow = () => ROLE === 'contractor' ? MY_COMPANY : (leadPeople()[0] || {name:'Lead SAP'}).name;
+const docTypeName = t => (TYPES.find(x => x[1] === t) || [t])[0];
+const docTypeShort = t => ({HVPTW:'HV PTW', LVPTW:'LV PTW', SFT:'SFT', LOA:'LOA'}[t] || t);
+const programmeOf = day => STATE.programmes[day];
+const isPublished = day => { const p = programmeOf(day); return Boolean(p && p.rev); };
+const publishedToday = () => isPublished(todayKey()) ? programmeOf(todayKey()).published : [];
+const actStart = a => expiryMillis(a.clearBy || a.at), actEnd = a => expiryMillis(a.until || a.at);
+
+/* The check: does this work overlap a restriction on the published programme? */
+function daysBetween(from, to){
+  const out = [], d = new Date(from); d.setHours(0,0,0,0);
+  for(let i = 0; i < 14 && d.getTime() <= to; i++){ out.push(dayOf(d.getTime())); d.setDate(d.getDate() + 1); }
+  return out;
+}
+function conflictCheck(touch, from, to){
+  const items = [], unpublished = [];
+  daysBetween(from, to).forEach(day => {
+    if(!isPublished(day)){ unpublished.push(day); return; }
+    const p = programmeOf(day);
+    p.published.forEach(a => {
+      if(actStart(a) > to || actEnd(a) < from) return;
+      const rel = relation(touch, a.equip);
+      if(rel) items.push({a, rel, day, sig:`${a.id}@${day}.r${p.rev}`});
+    });
+  });
+  return {items, unpublished};
+}
+const reqWindow = r => [expiryMillis(r.start), expiryMillis(r.end)];
+const reqCheck = r => conflictCheck(makeTouch(r.equip), ...reqWindow(r));
+const overriddenSigs = r => new Set((r.overrides || []).flatMap(o => o.sigs));
+const unresolvedHard = (r, chk) => { const ok = overriddenSigs(r); return chk.items.filter(i => isHard(i.rel) && !ok.has(i.sig)); };
+const reqDocs = r => { const t = makeTouch(r.equip); return allDocs().filter(d => (d.status === 'Live' || d.status === 'Pending issue')).map(d => ({d, rel:relation(docTouch(d), [...t.direct])})).filter(x => x.rel && isHard(x.rel)); };
+const OPEN_STATUSES = ['New','Under review','Information required','Accepted for planning','Deferred'];
+function checkLabel(r){
+  if(!OPEN_STATUSES.includes(r.status)) return '';
+  const c = reqCheck(r);
+  if(unresolvedHard(r, c).length) return 'Conflict';
+  if(c.items.some(i => !isHard(i.rel))) return 'Review link';
+  if(c.unpublished.length) return 'Not checked';
+  return c.items.length ? 'Override recorded' : 'No conflict recorded';
+}
+function clearanceRows(){
+  const now = Date.now();
+  return publishedToday().filter(a => a.clearBy).map(a => {
+    const docs = allDocs().filter(d => d.status === 'Live' || d.status === 'Pending issue').map(d => ({d, rel:relation(docTouch(d), a.equip)})).filter(x => x.rel);
+    const must = docs.filter(x => isHard(x.rel)), check = docs.filter(x => !isHard(x.rel));
+    const ms = expiryMillis(a.clearBy);
+    const state = !must.length ? 'No documents recorded' : ms <= now ? 'Overdue' : ms - now <= 2 * 3600e3 ? 'Due soon' : 'Planned';
+    return {a, must, check, ms, state};
+  }).sort((x, y) => x.ms - y.ms);
+}
+function eqStatuses(id){
+  const out = [];
+  if(allDocs().some(d => (d.status === 'Live' || d.status === 'Pending issue') && docTouch(d).direct.has(id))) out.push('Under active safety document');
+  publishedToday().filter(a => a.equip.includes(id)).forEach(a => {
+    const s = a.type === 'Energisation' ? 'Planned energisation' : a.type === 'Isolation' ? 'Planned isolation' : a.type === 'Restriction' ? 'Restricted' : 'Reserved for commissioning';
+    if(!out.includes(s)) out.push(s);
+  });
+  return out.length ? out : ['Available for assessment'];
+}
+function programmeBanner(){
+  const day = todayKey(), p = programmeOf(day);
+  if(!isPublished(day)) return `<div class="prog-banner stale"><b>Today's programme has not been published.</b><span>Programme checks are not reliable until the Lead SAP or Control Engineer publishes it. Treat every item as not checked.</span></div>`;
+  return `<div class="prog-banner"><b>Programme revision ${p.rev} published</b><span>${esc(p.by)} · ${esc(shortStamp(p.at))}</span></div>`;
+}
+function clearanceAlert(){
+  const rows = clearanceRows(), over = rows.filter(r => r.state === 'Overdue').length, soon = rows.filter(r => r.state === 'Due soon').length;
+  return `<a class="expiry-alert clearance-alert${over ? ' has-expired' : ''}" href="${U('clearance.html')}"><span class="expiry-alert-title">Clearance deadlines</span><span class="expiry-alert-count">${over + soon}</span>
+    <span class="expiry-alert-sub">${!isPublished(todayKey()) ? "Today's programme has not been published" : over ? `${over} overdue${soon ? `, ${soon} due within 2 hours` : ''}` : soon ? `${soon} due within 2 hours` : 'None due within 2 hours'}</span><span class="expiry-alert-arrow">View deadlines →</span></a>`;
+}
+
+/* ---------- Equipment picker shared by the request and programme forms ---------- */
+function eqOptions(){
+  const groups = new Map();
+  EQUIP.forEach(e => { if(!groups.has(e.group)) groups.set(e.group, []); groups.get(e.group).push(e); });
+  return `<option value="">Choose equipment</option>` + [...groups].map(([g, list]) => `<optgroup label="${esc(g)}">${list.map(e => `<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
+}
+function eqPicker(selectId, addId, listId, list, onChange){
+  const sel = document.getElementById(selectId), ul = document.getElementById(listId);
+  const draw = () => { ul.innerHTML = list.map(id => `<li><span class="pl">${esc(eqName(id))}</span><button type="button" data-rm="${esc(id)}" aria-label="Remove ${esc(eqName(id))}">×</button></li>`).join(''); if(onChange) onChange(); };
+  document.getElementById(addId).addEventListener('click', () => { if(sel.value && !list.includes(sel.value)){ list.push(sel.value); sel.value = ''; draw(); } });
+  ul.addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if(b){ list.splice(list.indexOf(b.dataset.rm), 1); draw(); } });
+  draw();
+}
+
+/* ---------- Document requests ---------- */
+function requestsPage(){
+  const rows = visibleRequests();
+  const n = s => rows.filter(r => r.status === s).length;
+  const statuses = ['All', 'New', 'Under review', 'Information required', 'Accepted for planning', 'Deferred', 'Declined', 'Document issued'];
+  const hero = pageHero(crumbs('<span>Document requests</span>'), ROLE === 'contractor' ? 'Contractor requests' : 'AP office register', ROLE === 'contractor' ? 'My document requests' : 'Document requests', ROLE === 'contractor' ? 'Submit a request and follow its progress. An accepted request is not permission to work.' : 'Every safety document starts with a request. Review it and check the programme before any planning begins.',
+    ROLE === 'mgmt' ? '' : `<div class="cta" style="margin-top:22px"><a class="btn primary" href="${U('request-new.html')}">+ New request</a></div>`);
+  const main = `<section class="block"><div class="wrap">
+    <div class="dashboard-metrics req-metrics" aria-label="Request status">
+      ${[['New','New requests'],['Under review','Under review'],['Information required','Information required'],['Accepted for planning','Accepted for planning'],['Deferred','Deferred'],['Declined','Declined']].map(([s,l]) => `<a href="#" data-pick="${esc(s)}"><b>${n(s)}</b><span>${l}</span></a>`).join('')}
+    </div>
+    <div class="toolbar">
+      <label class="search">${I.search}<input id="q" type="search" placeholder="Search reference, equipment, contractor…" aria-label="Search requests"></label>
+      <div class="filters" role="group" aria-label="Filter by status">${statuses.map((s,i) => `<button type="button" data-f="${esc(s)}" aria-pressed="${i===0}">${esc(s)}</button>`).join('')}</div>
+    </div>
+    <div class="count" id="count"></div>
+    <div class="tablebox"><table><thead><tr><th>Reference</th><th>Status</th><th>Document</th><th>Equipment</th><th>Contractor</th><th>Start</th>${STAFF ? '<th>Programme check</th>' : ''}<th><span style="position:absolute;left:-9999px">Open</span></th></tr></thead><tbody id="rows"></tbody></table></div>
+  </div></section>`;
+  shell('requests', hero, main);
+  let q = '', f = 'All';
+  const tb = document.getElementById('rows');
+  function draw(){
+    const ql = q.toLowerCase();
+    const shown = rows.filter(r => (f === 'All' || r.status === f) && (!ql || `${r.id} ${r.company} ${r.work} ${r.location} ${r.equip.map(eqName).join(' ')}`.toLowerCase().includes(ql)));
+    document.getElementById('count').textContent = `${shown.length} of ${rows.length} requests`;
+    tb.innerHTML = shown.length ? shown.map(r => { const c = STAFF ? checkLabel(r) : ''; return `<tr data-id="${esc(r.id)}" tabindex="0"><td data-label="Reference">${reqLink(r.id)}</td><td data-label="Status">${chip(r.status)}</td><td data-label="Document">${esc(docTypeShort(r.doc))}</td><td data-label="Equipment">${esc(r.equip.map(eqName).join(', '))}</td><td data-label="Contractor">${esc(r.company)}</td><td data-label="Start"><span class="mono">${esc(shortStamp(r.start))}</span></td>${STAFF ? `<td data-label="Programme check">${c ? chip(c) : '—'}</td>` : ''}<td class="go"><span>Open →</span></td></tr>`; }).join('')
+      : `<tr><td class="empty" colspan="${STAFF ? 8 : 7}">No requests match.</td></tr>`;
+  }
+  tb.addEventListener('click', e => { const tr = e.target.closest('tr[data-id]'); if(tr && !e.target.closest('a')) location.href = reqUrl(tr.dataset.id); });
+  tb.addEventListener('keydown', e => { const tr = e.target.closest('tr[data-id]'); if(tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); location.href = reqUrl(tr.dataset.id); } });
+  document.getElementById('q').addEventListener('input', e => { q = e.target.value; draw(); });
+  const setF = v => { f = v; document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.f === v))); draw(); };
+  document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => setF(b.dataset.f)));
+  document.querySelectorAll('[data-pick]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); setF(a.dataset.pick); }));
+  draw();
+}
+function requestNewPage(){
+  const nowStr = stamp();
+  const hero = pageHero(crumbs(`<a href="${U('requests.html')}">Document requests</a>`, '<span>New request</span>'), 'Stage 1 · Request', 'New document request', 'Tell the AP office what you need and when. The AP office reviews every request before any planning begins.');
+  const main = `<section class="block"><div class="wrap"><form class="docform" id="rform" novalidate>
+    <div class="fgroup"><h3>1 · Who</h3><div class="fgrid">
+      <label class="f"><span>Contractor *</span><select id="r-company"${ROLE === 'contractor' ? ' disabled' : ''}>${opts(CONTRACTORS,'Choose the contractor')}</select></label>
+      <label class="f"><span>Requesting person *</span><input id="r-by" type="text" maxlength="80" autocomplete="off"></label>
+      <label class="f"><span>Phone or email *</span><input id="r-contact" type="text" maxlength="100" autocomplete="off"></label>
+      <label class="f"><span>Proposed recipient (CP) *</span><select id="r-cp">${opts(DATA.cp.filter(c => c.status === 'Active').map(c => [`${c.name} · green lock ${c.id}`, c.id]),'Choose the CP')}</select></label>
+    </div></div>
+    <div class="fgroup"><h3>2 · Work</h3><div class="fgrid">
+      <label class="f"><span>Document requested *</span><select id="r-doc">${opts(TYPES,'Choose a document')}</select></label>
+      <label class="f"><span>Work location *</span><select id="r-loc">${opts([...OPTIONS.hvLoc, ...OPTIONS.lvLoc],'Choose the location')}</select></label>
+      <div class="f wide"><span>Equipment * <small>Choose from the list so the programme check can match it. Add every item affected.</small></span>
+        <div class="addrow"><select id="r-eq">${eqOptions()}</select><button type="button" class="btn ghost small" id="r-add">Add</button></div><ul class="picked" id="r-list"></ul></div>
+      <label class="f wide"><span>Work activity *</span><textarea id="r-work" rows="3" maxlength="500"></textarea></label>
+      <label class="f wide"><span>RAMS reference * <small>Demo only. File upload needs secure storage in the live system.</small></span><input id="r-rams" type="text" maxlength="60" autocomplete="off"></label>
+    </div></div>
+    <div class="fgroup"><h3>3 · When</h3><div class="fgrid">
+      <label class="f"><span>Required from *</span><input id="r-start" type="datetime-local"></label>
+      <label class="f"><span>Required until *</span><input id="r-end" type="datetime-local"></label>
+      <label class="f wide"><span>Notes <small>Optional</small></span><textarea id="r-notes" rows="2" maxlength="500"></textarea></label>
+    </div></div>
+    <div class="errors" id="errors" role="alert" hidden></div>
+    <div class="formfoot"><button type="submit" class="btn primary">Submit request ${I.arrow}</button><a class="btn ghost" href="${U('requests.html')}">Cancel</a></div>
+    <p class="hint">Submitting a request does not permit any work and does not reserve any equipment.</p>
+  </form></div></section>`;
+  shell('requestnew', hero, main);
+  const $ = id => document.getElementById(id), equip = [];
+  if(ROLE === 'contractor') $('r-company').value = MY_COMPANY;
+  eqPicker('r-eq','r-add','r-list',equip);
+  $('rform').addEventListener('submit', e => {
+    e.preventDefault();
+    const err = [], need = (id, msg) => { if(!$(id).value.trim()) err.push(msg); };
+    need('r-company','Choose the contractor.'); need('r-by','Enter the requesting person.'); need('r-contact','Enter a phone number or email.'); need('r-cp','Choose the proposed recipient.');
+    need('r-doc','Choose the document requested.'); need('r-loc','Choose the work location.'); need('r-work','Describe the work activity.'); need('r-rams','Enter the RAMS reference.');
+    if(!equip.length) err.push('Add at least one item of equipment.');
+    const start = fromInput($('r-start').value), end = fromInput($('r-end').value);
+    if(!start || !end) err.push('Enter when the document is required from and until.');
+    else if(expiryMillis(end) <= expiryMillis(start)) err.push('The finish must be after the start.');
+    else if(expiryMillis(end) <= Date.now()) err.push('The finish must be in the future.');
+    const box = $('errors');
+    if(err.length){ box.innerHTML = `<b>Before submitting:</b><ul>${err.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`; box.hidden = false; box.scrollIntoView({behavior:'smooth', block:'center'}); return; }
+    const yr = new Date().getFullYear(), max = STATE.requests.map(r => +r.id.split('-')[2] || 0).reduce((a,b) => Math.max(a,b), 0);
+    const id = `DR-${yr}-${String(max + 1).padStart(4,'0')}`, now = stamp(), company = $('r-company').value;
+    STATE.requests.unshift({id, status:'New', doc:$('r-doc').value, company, by:$('r-by').value.trim(), contact:$('r-contact').value.trim(), equip:[...equip], location:$('r-loc').value, work:$('r-work').value.trim(), rams:$('r-rams').value.trim(), cp:$('r-cp').value, start, end, notes:$('r-notes').value.trim(), comment:'', reply:'', overrides:[], docId:'', created:now, log:[[now, company, 'Request submitted']]});
+    if(!saveState()){ box.innerHTML = '<b>Could not save.</b> This browser is blocking storage, for example in a private window.'; box.hidden = false; return; }
+    location.href = reqUrl(id) + '&created=1';
+  });
+}
+function checkPanel(r, chk){
+  const items = chk.items, ok = overriddenSigs(r);
+  const line = i => `<li class="${isHard(i.rel) && !ok.has(i.sig) ? 'hard' : isHard(i.rel) ? 'done' : 'soft'}"><b>${esc(i.a.title)}</b><span>${esc(REL_TEXT[i.rel.level])}: ${esc(relDetail(i.rel))}</span><span>Restricted ${esc(shortStamp(i.a.clearBy || i.a.at))} to ${esc(shortStamp(i.a.until))}${ok.has(i.sig) ? ' · override recorded' : ''}</span></li>`;
+  const docs = reqDocs(r);
+  const lv = r.equip.some(id => (EQUIP.get(id) || {}).sys === 'LV');
+  return `<div class="panel"><h3>Programme check</h3>
+    ${chk.unpublished.length ? `<p class="notice-warn"><b>Not checked for ${chk.unpublished.map(d => esc(dayLabel(d))).join(', ')}.</b> No programme has been published for that date, so this must be checked again before issue.</p>` : ''}
+    ${items.length ? `<ul class="conflicts">${items.map(line).join('')}</ul>` : !chk.unpublished.length ? '<p>No conflict recorded on the published programme for this equipment and time.</p>' : ''}
+    ${docs.length ? `<h4 class="subhead">Existing documents on this equipment</h4><ul class="conflicts">${docs.map(x => `<li class="soft"><b><a class="mono" href="${recUrl(x.d.id)}">${esc(x.d.id)}</a> · ${esc(x.d.status)}</b><span>${esc(REL_TEXT[x.rel.level])}</span></li>`).join('')}</ul>` : ''}
+    <p class="hint" style="margin-top:12px">${lv ? 'LV plant is matched by name only until the LV connections are mapped. ' : ''}A clear result means nothing is recorded. It does not show equipment is safe or available.</p></div>`;
+}
+const CHAIN = ['Request','AP/SAP review','Programme check','Isolation planning','Safety document','Cancellation'];
+function chainPanel(r){
+  const d = r.docId ? find(r.docId) : null;
+  const n = d && d.r.status === 'Cancelled' ? 6 : r.docId ? 5 : r.status === 'Accepted for planning' ? 3 : ['Under review','Information required','Deferred'].includes(r.status) ? 1 : r.status === 'Declined' ? 2 : 1;
+  return `<div class="panel"><h3>Traceability</h3><ol class="chain">${CHAIN.map((c,i) => `<li class="${i < n ? 'done' : i === n && r.status !== 'Declined' ? 'now' : ''}">${c}</li>`).join('')}</ol>
+    ${r.docId ? `<p style="margin-top:12px">Safety document: <a class="mono" href="${recUrl(r.docId)}">${esc(r.docId)}</a></p>` : ''}</div>`;
+}
+const REVIEW_CHECKS = ['The proposed work activity is sufficiently described','The RAMS and supporting information are suitable','The equipment is correctly identified','The proposed recipient is appropriately authorised','The requested isolation does not conflict with existing documents','The programme check above has been reviewed','The work can be accommodated within the operational programme'];
+function reviewPanel(r, chk){
+  if(!CAN_REVIEW) return '';
+  const hv = r.equip.some(id => (EQUIP.get(id) || {}).sys === 'HV');
+  const aps = DATA.ap.filter(a => a.status === 'Active' && (!hv || /HV/.test(a.auth)));
+  const pickAp = `<label class="f"><span>Reviewing AP or SAP *</span><select id="rvAp">${opts(aps.map(a => [`${a.name} · ${a.role} · ${a.auth}`, a.id]), 'Select your name')}</select></label>`;
+  if(r.status === 'New') return `<div class="panel"><h3>AP office</h3><p>Start the review to show the rest of the AP office you have this request.</p>${pickAp.replace('<label class="f">','<label class="f" style="margin-top:12px">')}<p class="errors" id="rvErr" hidden></p><button type="button" class="btn primary small" id="rvStart" style="margin-top:12px">Start review</button></div>`;
+  if(['Information required','Deferred'].includes(r.status)) return `<div class="panel"><h3>AP office</h3><p>${r.status === 'Deferred' ? 'Held. Reopen it when the restriction has cleared.' : 'Waiting on the contractor. You can reopen it if the information arrives another way.'}</p>${pickAp.replace('<label class="f">','<label class="f" style="margin-top:12px">')}<p class="errors" id="rvErr" hidden></p><button type="button" class="btn ghost small" id="rvStart" style="margin-top:12px">Reopen review</button></div>`;
+  if(r.status === 'Accepted for planning') return `<div class="panel"><h3>Next step</h3><p>Accepted for planning only. This is not permission to work or authority to issue a safety document.</p><a class="btn primary small" href="${U('new.html')}?request=${encodeURIComponent(r.id)}" style="margin-top:12px">Prepare safety document ${I.arrow}</a></div>`;
+  if(r.status !== 'Under review') return '';
+  const hard = unresolvedHard(r, chk), soft = chk.items.filter(i => !isHard(i.rel));
+  return `<div class="panel"><h3>Review decision</h3>${pickAp}
+    <ul class="checks cancel-checks">${REVIEW_CHECKS.map(t => `<li><label><input type="checkbox" class="rvchk"><span>${esc(t)}</span></label></li>`).join('')}
+    ${soft.length ? `<li><label><input type="checkbox" class="rvchk"><span>I have reviewed the ${soft.length} linked ${soft.length === 1 ? 'item' : 'items'} on the same network</span></label></li>` : ''}
+    ${chk.unpublished.length ? `<li><label><input type="checkbox" class="rvchk"><span>No programme is published for part of this period. It will be checked again before issue</span></label></li>` : ''}</ul>
+    <label class="f" style="margin-top:12px"><span>Comment <small>Required unless accepting. The contractor sees this.</small></span><textarea id="rvNote" rows="3" maxlength="500"></textarea></label>
+    ${hard.length ? `<p class="notice-warn" style="margin-top:12px"><b>Cannot be accepted yet.</b> ${hard.length} programme ${hard.length === 1 ? 'conflict is' : 'conflicts are'} unresolved. Defer it, ask the contractor to change the time, or ask the Lead SAP or Control Engineer to resolve it.</p>` : ''}
+    <p class="errors" id="rvErr" hidden></p>
+    <div class="decision"><button type="button" class="btn primary small" data-dec="Accepted for planning"${hard.length ? ' disabled' : ''}>Accept for planning</button><button type="button" class="btn ghost small" data-dec="Information required">Request information</button><button type="button" class="btn ghost small" data-dec="Deferred">Defer</button><button type="button" class="btn ghost small" data-dec="Declined">Decline</button></div></div>`;
+}
+function overrideHtml(sigs, label){
+  const leads = leadPeople();
+  return `<div class="panel override"><h3>Resolve programme conflict</h3><p>${esc(label)} Only the Lead SAP or Control Engineer can record this. It does not authorise any switching or work.</p>
+    <label class="f" style="margin-top:12px"><span>Authorised person *</span><select id="ovBy">${opts(leads.map(a => [`${a.name} · ${a.role}`, a.id]),'Select your name')}</select></label>
+    <label class="f" style="margin-top:12px"><span>Reason *</span><textarea id="ovWhy" rows="3" maxlength="500"></textarea></label>
+    <p class="errors" id="ovErr" hidden></p><button type="button" class="btn primary small" id="ovSave" style="margin-top:12px">Record resolution</button></div>`;
+}
+function wireOverride(r, sigs, done){
+  const b = document.getElementById('ovSave'); if(!b) return;
+  b.addEventListener('click', () => {
+    const by = apById(document.getElementById('ovBy').value), why = document.getElementById('ovWhy').value.trim(), err = document.getElementById('ovErr');
+    if(!by || !why){ err.textContent = 'Select your name and enter the reason.'; err.hidden = false; return; }
+    const now = stamp();
+    r.overrides = r.overrides || []; r.overrides.push({at:now, by:by.id, why, sigs});
+    r.log.push([now, by.name, `Programme conflict resolved: ${why}`]); saveState(); done();
+  });
+}
+function requestRecPage(){
+  const qs = new URLSearchParams(location.search), r = reqById(qs.get('id'));
+  if(!r || (ROLE === 'contractor' && r.company !== MY_COMPANY)){ shell('requests', pageHero(crumbs(`<a href="${U('requests.html')}">Document requests</a>`), 'Request', 'Request not found', 'Open the register and select a request.'), ''); return; }
+  const chk = reqCheck(r), hard = unresolvedHard(r, chk), open = OPEN_STATUSES.includes(r.status);
+  document.title = `${r.id} · Powertec Isolation & Safety Document Control`;
+  const hero = `<section class="hero"><span class="orb" aria-hidden="true"></span><div class="wrap">
+    <nav class="crumbs"><a href="${U('index.html')}">Home</a><span>/</span><a href="${U('requests.html')}">Document requests</a><span>/</span><span>${esc(r.id)}</span></nav>
+    <div class="rec-head"><div><div class="rec-id">${esc(r.id)}</div><h1 style="font-size:clamp(28px,4.4vw,46px)">${esc(r.work)}</h1></div>${chip(r.status)}</div>
+    ${qs.get('created') ? `<p class="saved">${esc(r.id)} submitted to the AP office. This does not permit any work.</p>` : ''}
+  </div></section>`;
+  const body = fields([['Reference',mono(r.id)],['Status',chip(r.status)],['Document requested',esc(docTypeName(r.doc))],['Contractor',esc(r.company)],['Requested by',esc(r.by)],['Contact',esc(r.contact)],['Equipment',r.equip.map(eqLink).join('<br>'),1],['Work location',esc(r.location)],['RAMS reference',r.rams ? mono(r.rams) : '<span class="missing-contact">Not provided</span>'],['Work activity',esc(r.work),1],['Proposed recipient',STAFF ? cpLink(r.cp) : esc((cpById(r.cp) || {name:r.cp}).name)],['Submitted',mono(r.created)],['Required from',mono(r.start)],['Required until',mono(r.end)],...(r.notes ? [['Notes',esc(r.notes),1]] : []),...(r.comment ? [['AP office comment',esc(r.comment),1]] : []),...(r.reply ? [['Contractor reply',esc(r.reply),1]] : [])]);
+  let side = chainPanel(r);
+  if(STAFF) side += (open ? checkPanel(r, chk) : '') + (open ? reviewPanel(r, chk) : '');
+  const sigs = hard.map(i => i.sig);
+  if(IS_LEAD && open && hard.length) side += overrideHtml(sigs, `${hard.length} programme ${hard.length === 1 ? 'conflict needs' : 'conflicts need'} a recorded decision.`);
+  if(ROLE === 'contractor' && r.status === 'Information required') side += `<div class="panel"><h3>Reply to the AP office</h3><label class="f"><span>Your reply *</span><textarea id="crReply" rows="3" maxlength="500"></textarea></label><label class="f" style="margin-top:12px"><span>RAMS reference</span><input id="crRams" type="text" maxlength="60" value="${esc(r.rams)}"></label><p class="errors" id="crErr" hidden></p><button type="button" class="btn primary small" id="crSend" style="margin-top:12px">Send to AP office</button></div>`;
+  side += `<div class="panel"><h3>Activity log</h3><ol class="log">${r.log.map(([t,w,m]) => `<li><time>${esc(shortStamp(t))}</time><span><b>${esc(w)}</b> · ${esc(m)}</span></li>`).join('')}</ol></div>`;
+  const main = `<section class="block"><div class="wrap"><div class="rec-grid"><div>${body}</div><aside class="side">${side}</aside></div><a class="back" href="${U('requests.html')}">← Back to document requests</a></div></section>`;
+  shell('requests', hero, main);
+  const rerun = () => location.replace(reqUrl(r.id));
+  const $ = id => document.getElementById(id);
+  const startBtn = $('rvStart');
+  if(startBtn) startBtn.addEventListener('click', () => {
+    const a = apById($('rvAp').value), err = $('rvErr');
+    if(!a){ err.textContent = 'Select your name.'; err.hidden = false; return; }
+    r.status = 'Under review'; r.reviewer = a.id; r.log.push([stamp(), a.name, 'Review started']); saveState(); rerun();
+  });
+  document.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => {
+    const a = apById($('rvAp').value), err = $('rvErr'), note = $('rvNote').value.trim(), dec = b.dataset.dec;
+    const fail = m => { err.textContent = m; err.hidden = false; };
+    if(!a) return fail('Select your name.');
+    if(dec === 'Accepted for planning'){
+      if(unresolvedHard(r, reqCheck(r)).length) return fail('Resolve the programme conflicts first.');
+      if(![...document.querySelectorAll('.rvchk')].every(c => c.checked)) return fail('Tick every check before accepting.');
+    } else if(!note) return fail('Add a comment so the contractor knows what happens next.');
+    r.status = dec; r.reviewer = a.id; r.comment = note;
+    r.log.push([stamp(), a.name, dec === 'Accepted for planning' ? `Accepted for planning${note ? `: ${note}` : ''}. Not permission to work or authority to issue a safety document.` : `${dec === 'Information required' ? 'Information requested' : dec}: ${note}`]);
+    saveState(); rerun();
+  }));
+  wireOverride(r, sigs, rerun);
+  const cr = $('crSend');
+  if(cr) cr.addEventListener('click', () => {
+    const v = $('crReply').value.trim(), err = $('crErr');
+    if(!v){ err.textContent = 'Enter your reply.'; err.hidden = false; return; }
+    r.reply = v; r.rams = $('crRams').value.trim() || r.rams; r.status = 'New'; r.log.push([stamp(), r.company, `Information provided: ${v}`]); saveState(); rerun();
+  });
+}
+
+/* ---------- Daily programme ---------- */
+const ACT_TYPES = ['Energisation','Isolation','Commissioning','Testing','Restriction'];
+function actCard(a, day, editable){
+  const today = day === todayKey();
+  const row = today ? clearanceRows().find(x => x.a.id === a.id) : null;
+  const reqs = STATE.requests.filter(r => OPEN_STATUSES.includes(r.status) && relation(makeTouch(r.equip), a.equip) && expiryMillis(r.start) <= actEnd(a) && expiryMillis(r.end) >= actStart(a));
+  const state = row ? row.state : '';
+  return `<details class="act"><summary><span class="act-time mono">${esc(String(a.at).slice(11))}</span><span class="act-main"><b>${esc(a.title)}</b><small>${esc(a.equip.map(eqName).join(', '))}</small></span><span class="act-side">${chip(a.type)}${state ? chip(state) : ''}</span></summary>
+    <div class="act-body">${fields([['Equipment affected',a.equip.map(eqLink).join('<br>'),1],['Scheduled time',mono(a.at)],['Documents cleared by',a.clearBy ? mono(a.clearBy) : 'None set'],['Equipment restricted until',mono(a.until)],['Responsible',esc(a.owner)],...(row ? [['Associated safety documents',row.must.length ? row.must.map(x => `<a class="mono" href="${recUrl(x.d.id)}">${esc(x.d.id)}</a>`).join(' ') : 'None recorded',1],...(row.check.length ? [['To check, same network',row.check.map(x => `<a class="mono" href="${recUrl(x.d.id)}">${esc(x.d.id)}</a>`).join(' '),1]] : [])] : []),['Related contractor requests',reqs.length ? reqs.map(r => reqLink(r.id)).join(' ') : 'None',1],...(a.notes ? [['Notes',esc(a.notes),1]] : [])])}
+    ${editable ? `<div class="decision"><button type="button" class="btn ghost small" data-edit="${esc(a.id)}">Edit</button><button type="button" class="btn ghost small" data-remove="${esc(a.id)}">Remove</button></div>` : ''}</div></details>`;
+}
+function programmePage(){
+  const qs = new URLSearchParams(location.search), day = /^\d{4}-\d{2}-\d{2}$/.test(qs.get('date') || '') ? qs.get('date') : todayKey();
+  if(!STATE.programmes[day] && IS_LEAD) STATE.programmes[day] = {draft:[], published:[], rev:0, by:'', at:'', log:[]};
+  const p = programmeOf(day) || {draft:[], published:[], rev:0, log:[]};
+  const list = IS_LEAD ? p.draft : p.published;
+  const sorted = [...list].sort((a,b) => String(a.at).localeCompare(String(b.at)));
+  const changed = IS_LEAD && JSON.stringify(p.draft) !== JSON.stringify(p.published);
+  const hero = pageHero(crumbs('<span>Daily programme</span>'), 'Daily operational control', 'Daily programme', esc(dayLabel(day)),
+    `<div class="cta" style="margin-top:22px"><label class="f prog-date"><span>Programme date</span><input id="pDate" type="date" value="${day}"></label><button type="button" class="btn ghost small" id="pPrint">Print</button></div>`);
+  const status = p.rev ? `<div class="prog-banner"><b>Revision ${p.rev} published</b><span>${esc(p.by)} · ${esc(shortStamp(p.at))}</span></div>` : `<div class="prog-banner stale"><b>Not published.</b><span>Programme checks for this date show as not checked.</span></div>`;
+  const form = IS_LEAD ? `<form class="fgroup" id="aform" novalidate><h3 id="aTitle">Add activity</h3><div class="fgrid">
+      <label class="f"><span>Activity type *</span><select id="a-type">${opts(ACT_TYPES,'Choose the type')}</select></label>
+      <label class="f"><span>Description *</span><input id="a-title" type="text" maxlength="120" autocomplete="off"></label>
+      <div class="f wide"><span>Equipment *</span><div class="addrow"><select id="a-eq">${eqOptions()}</select><button type="button" class="btn ghost small" id="a-add">Add</button></div><ul class="picked" id="a-list"></ul></div>
+      <label class="f"><span>Scheduled time *</span><input id="a-at" type="time"></label>
+      <label class="f"><span>Documents cleared by <small>Optional. The restriction starts here if set.</small></span><input id="a-clear" type="time"></label>
+      <label class="f"><span>Restricted until *</span><input id="a-until" type="time"></label>
+      <label class="f"><span>Responsible *</span><select id="a-owner">${opts(['Lead SAP','Control Engineer'],'Choose')}</select></label>
+      <label class="f wide"><span>Notes <small>Optional</small></span><textarea id="a-notes" rows="2" maxlength="300"></textarea></label>
+    </div><p class="errors" id="aErr" hidden style="margin-top:12px"></p><div class="decision"><button type="submit" class="btn primary small" id="aSave">Save to draft</button><button type="button" class="btn ghost small" id="aCancel" hidden>Cancel edit</button></div></form>
+    <div class="fgroup publish"><h3>Publish</h3><p>${changed ? 'You have changes that the AP office cannot see until you publish them.' : 'The published programme is up to date.'}</p>
+      <label class="f" style="margin-top:12px"><span>Published by *</span><select id="pBy">${opts(leadPeople().map(a => [`${a.name} · ${a.role}`, a.id]),'Select your name')}</select></label>
+      <p class="errors" id="pErr" hidden style="margin-top:12px"></p><button type="button" class="btn primary small" id="pPublish" style="margin-top:12px"${changed || !p.rev ? '' : ' disabled'}>Publish revision ${p.rev + 1}</button></div>` : '';
+  const main = `<section class="block"><div class="wrap">
+    ${status}
+    ${changed ? '<p class="notice-warn" style="margin-top:12px"><b>Draft changes.</b> You are viewing your draft. Checks use the published revision.</p>' : ''}
+    <div class="acts">${sorted.length ? sorted.map(a => actCard(a, day, IS_LEAD)).join('') : `<p class="empty-box">${IS_LEAD ? 'No activities yet. Add the agreed requirements below.' : 'No activities have been published for this date.'}</p>`}</div>
+    <p class="hint" style="margin-top:14px">The programme shows coordination requirements. It does not replace the Control Engineer's authority or the approved switching process.</p>
+    ${form}
+    ${(p.log || []).length ? `<div class="panel" style="margin-top:20px"><h3>Programme log</h3><ol class="log">${p.log.map(([t,w,m]) => `<li><time>${esc(shortStamp(t))}</time><span><b>${esc(w)}</b> · ${esc(m)}</span></li>`).join('')}</ol></div>` : ''}
+  </div></section>`;
+  shell('programme', hero, main);
+  const $ = id => document.getElementById(id);
+  $('pDate').addEventListener('change', e => { if(e.target.value) location.href = U(`programme.html?date=${e.target.value}`); });
+  $('pPrint').addEventListener('click', () => { document.querySelectorAll('details.act').forEach(d => { d.open = true; }); window.print(); });
+  if(!IS_LEAD) return;
+  const equip = []; let editing = '';
+  const redraw = eqPickerRedraw(equip);
+  const stampOf = v => `${day} ${v}`;
+  const clearForm = () => { editing = ''; $('aform').reset(); equip.length = 0; redraw(); $('aTitle').textContent = 'Add activity'; $('aSave').textContent = 'Save to draft'; $('aCancel').hidden = true; };
+  $('aCancel').addEventListener('click', clearForm);
+  document.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
+    const a = p.draft.find(x => x.id === b.dataset.edit); if(!a) return;
+    editing = a.id; $('a-type').value = a.type; $('a-title').value = a.title; equip.length = 0; equip.push(...a.equip); redraw();
+    $('a-at').value = String(a.at).slice(11); $('a-clear').value = String(a.clearBy).slice(11); $('a-until').value = String(a.until).slice(11); $('a-owner').value = a.owner; $('a-notes').value = a.notes || '';
+    $('aTitle').textContent = `Edit ${a.title}`; $('aSave').textContent = 'Save changes'; $('aCancel').hidden = false; $('aform').scrollIntoView({behavior:'smooth', block:'start'});
+  }));
+  document.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => { p.draft = p.draft.filter(x => x.id !== b.dataset.remove); saveState(); location.reload(); }));
+  $('aform').addEventListener('submit', e => {
+    e.preventDefault();
+    const err = [], at = $('a-at').value, clear = $('a-clear').value, until = $('a-until').value;
+    if(!$('a-type').value) err.push('Choose the activity type.'); if(!$('a-title').value.trim()) err.push('Enter a description.'); if(!equip.length) err.push('Add at least one item of equipment.');
+    if(!at || !until) err.push('Enter the scheduled time and restricted-until time.');
+    else { if(until < at) err.push('Restricted until must be after the scheduled time.'); if(clear && clear > at) err.push('Documents cleared by must be before the scheduled time.'); }
+    if(!$('a-owner').value) err.push('Choose who is responsible.');
+    if(err.length){ $('aErr').innerHTML = err.map(esc).join('<br>'); $('aErr').hidden = false; return; }
+    const rec = {type:$('a-type').value, title:$('a-title').value.trim(), equip:[...equip], at:stampOf(at), clearBy:clear ? stampOf(clear) : '', until:stampOf(until), owner:$('a-owner').value, notes:$('a-notes').value.trim()};
+    if(editing) Object.assign(p.draft.find(x => x.id === editing), rec);
+    else { const max = Object.values(STATE.programmes).flatMap(x => x.draft).map(x => +x.id.split('-')[1] || 0).reduce((a,b) => Math.max(a,b), 0); p.draft.push({id:`ACT-${String(max + 1).padStart(3,'0')}`, ...rec}); }
+    saveState(); location.reload();
+  });
+  $('pPublish').addEventListener('click', () => {
+    const a = apById($('pBy').value);
+    if(!a){ $('pErr').textContent = 'Select your name.'; $('pErr').hidden = false; return; }
+    const now = stamp(); p.rev += 1; p.published = JSON.parse(JSON.stringify(p.draft)); p.by = a.name; p.at = now;
+    p.log = p.log || []; p.log.push([now, a.name, `Revision ${p.rev} published with ${p.published.length} ${p.published.length === 1 ? 'activity' : 'activities'}`]);
+    saveState(); location.reload();
+  });
+}
+function eqPickerRedraw(list){
+  const ul = document.getElementById('a-list'), sel = document.getElementById('a-eq');
+  const draw = () => { ul.innerHTML = list.map(id => `<li><span class="pl">${esc(eqName(id))}</span><button type="button" data-rm="${esc(id)}" aria-label="Remove ${esc(eqName(id))}">×</button></li>`).join(''); };
+  document.getElementById('a-add').addEventListener('click', () => { if(sel.value && !list.includes(sel.value)){ list.push(sel.value); sel.value = ''; draw(); } });
+  ul.addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if(b){ list.splice(list.indexOf(b.dataset.rm), 1); draw(); } });
+  return draw;
+}
+
+/* ---------- Clearance deadlines ---------- */
+function clearancePage(){
+  const hero = pageHero(crumbs('<span>Clearance deadlines</span>'), 'Daily operational control', 'Clearance deadlines', 'Documents that must be reviewed for cancellation before an activity on the published programme.');
+  const main = `<section class="block"><div class="wrap">
+    ${programmeBanner()}
+    <div class="expiry-notice" style="margin-top:14px"><strong>A deadline never cancels a document.</strong> Passing a deadline does not release equipment or allow any lock to be removed. Cancellation stays subject to the safety rules and physical checks.</div>
+    <div id="clearList"></div></div></section>`;
+  shell('clearance', hero, main);
+  const doc = x => { const c = cpById(recipientId(x.d)), tel = c && c.phone;
+    return `<tr><td data-label="Document"><a class="mono" href="${recUrl(x.d.id)}">${esc(x.d.id)} ↗</a></td><td data-label="Recipient">${c ? `<a class="plink" href="${recUrl(c.id)}">${esc(c.name)}</a>` : '—'}</td><td data-label="Status">${chip(x.d.status)}</td><td data-label="Link">${esc(REL_TEXT[x.rel.level])}</td><td data-label="Phone">${tel ? `<a href="tel:${esc(tel.replace(/[^+\d]/g,''))}">${esc(tel)}</a>` : '<span class="missing-contact">Not recorded</span>'}</td></tr>`; };
+  const draw = () => {
+    const rows = clearanceRows();
+    document.getElementById('clearList').innerHTML = rows.length ? rows.map(r => `<article class="clear-card ${r.state === 'Overdue' ? 'over' : ''}"><div class="clear-head"><div><h3>${esc(r.a.title)}</h3><p>${esc(r.a.equip.map(eqName).join(', '))}</p></div>${chip(r.state)}</div>
+      <div class="clear-times"><span><small>Planned start</small><b class="mono">${esc(String(r.a.at).slice(11))}</b></span><span><small>Clearance target</small><b class="mono">${esc(String(r.a.clearBy).slice(11))}</b></span><span><small>Outstanding</small><b class="mono">${r.must.length}</b></span></div>
+      ${r.must.length || r.check.length ? `<div class="tablebox expiry-table-wrap"><table class="expiry-table"><thead><tr><th>Document</th><th>Recipient</th><th>Status</th><th>Link</th><th>Phone</th></tr></thead><tbody>${[...r.must, ...r.check].map(doc).join('')}</tbody></table></div>` : '<p class="hint">No live documents recorded against this equipment. Physical checks are still required.</p>'}</article>`).join('')
+      : '<p class="empty-box" style="margin-top:20px">No clearance deadlines on the published programme.</p>';
+  };
+  draw(); setInterval(draw, 15000);
+}
+
+/* ---------- Equipment availability ---------- */
+function equipmentPage(){
+  const id = new URLSearchParams(location.search).get('id');
+  if(id && EQUIP.has(id)) return equipmentDetail(EQUIP.get(id));
+  const rows = [...EQUIP.values()].map(e => ({...e, st:eqStatuses(e.id)}));
+  const filters = ['All','Available for assessment','Under active safety document','Planned energisation','Planned isolation','Reserved for commissioning','Restricted'];
+  const hero = pageHero(crumbs('<span>Equipment availability</span>'), 'Daily operational control', 'Equipment availability', 'Select an item to see its requests, documents, keys, planned activities and deadlines in one place.');
+  const main = `<section class="block"><div class="wrap">${programmeBanner()}
+    <p class="expiry-notice" style="margin-top:14px"><strong>Planning indicators only.</strong> These show what is recorded. They are not verified electrical states.</p>
+    <div class="toolbar"><label class="search">${I.search}<input id="q" type="search" placeholder="Search equipment…" aria-label="Search equipment"></label>
+    <div class="filters" role="group" aria-label="Filter by planning status">${filters.map((s,i) => `<button type="button" data-f="${esc(s)}" aria-pressed="${i===0}">${esc(s)}</button>`).join('')}</div></div>
+    <div class="count" id="count"></div><div class="tablebox"><table><thead><tr><th>Equipment</th><th>Group</th><th>System</th><th>Planning status</th><th><span style="position:absolute;left:-9999px">Open</span></th></tr></thead><tbody id="rows"></tbody></table></div></div></section>`;
+  shell('equipment', hero, main);
+  let q = '', f = 'All'; const tb = document.getElementById('rows');
+  const draw = () => {
+    const ql = q.toLowerCase(), shown = rows.filter(r => (f === 'All' || r.st.includes(f)) && (!ql || `${r.name} ${r.group}`.toLowerCase().includes(ql)));
+    document.getElementById('count').textContent = `${shown.length} of ${rows.length} items`;
+    tb.innerHTML = shown.length ? shown.map(r => `<tr data-id="${esc(r.id)}" tabindex="0"><td data-label="Equipment"><a class="plink" href="${eqUrl(r.id)}">${esc(r.name)}</a></td><td data-label="Group">${esc(r.group)}</td><td data-label="System">${sys(r.sys)}</td><td data-label="Planning status">${r.st.map(chip).join(' ')}</td><td class="go"><span>Open →</span></td></tr>`).join('') : '<tr><td class="empty" colspan="5">No equipment matches.</td></tr>';
+  };
+  tb.addEventListener('click', e => { const tr = e.target.closest('tr[data-id]'); if(tr && !e.target.closest('a')) location.href = eqUrl(tr.dataset.id); });
+  tb.addEventListener('keydown', e => { const tr = e.target.closest('tr[data-id]'); if(tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); location.href = eqUrl(tr.dataset.id); } });
+  document.getElementById('q').addEventListener('input', e => { q = e.target.value; draw(); });
+  document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => { f = b.dataset.f; document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
+  draw();
+}
+function equipmentDetail(e){
+  const one = makeTouch([e.id]);
+  const docs = allDocs().filter(d => d.status === 'Live' || d.status === 'Pending issue').map(d => ({d, rel:relation(docTouch(d), [e.id])})).filter(x => x.rel);
+  const keys = DATA.keys.filter(k => keyTouch(k.id).direct.includes(e.id));
+  const acts = publishedToday().map(a => ({a, rel:relation(one, a.equip)})).filter(x => x.rel);
+  const reqs = STATE.requests.filter(r => OPEN_STATUSES.includes(r.status) && relation(makeTouch(r.equip), [e.id]));
+  const near = [...(ADJ.get(e.id) || [])];
+  const hero = pageHero(crumbs(`<a href="${U('equipment.html')}">Equipment availability</a>`, `<span>${esc(e.name)}</span>`), `${e.sys} · ${esc(e.group)}`, esc(e.name), '', `<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">${eqStatuses(e.id).map(chip).join('')}</div>`);
+  const list = (title, html) => `<div class="panel"><h3>${title}</h3>${html}</div>`;
+  const main = `<section class="block"><div class="wrap">${programmeBanner()}
+    <div class="eq-grid">
+    ${list('Planned activities today', acts.length ? `<ul class="conflicts">${acts.map(x => `<li class="${isHard(x.rel) ? 'hard' : 'soft'}"><b>${esc(x.a.title)}</b><span>${esc(REL_TEXT[x.rel.level])}${x.rel.level === 'direct' ? '' : `: ${esc(relDetail(x.rel))}`}</span><span>${esc(String(x.a.at).slice(11))}${x.a.clearBy ? ` · clear by ${esc(String(x.a.clearBy).slice(11))}` : ''} · restricted until ${esc(shortStamp(x.a.until))}</span></li>`).join('')}</ul>` : '<p>None published.</p>')}
+    ${list('Active safety documents', docs.length ? `<ul class="conflicts">${docs.map(x => `<li class="soft"><b><a class="mono" href="${recUrl(x.d.id)}">${esc(x.d.id)}</a> · ${esc(x.d.status)}</b><span>${esc(REL_TEXT[x.rel.level])}</span></li>`).join('')}</ul>` : '<p>None recorded.</p>')}
+    ${list('Document requests', reqs.length ? `<div class="links">${reqs.map(r => reqLink(r.id)).join(' ')}</div>` : '<p>None open.</p>')}
+    ${list('Allocated keys', keys.length ? `<div class="links">${keys.map(k => `<a href="${recUrl(k.id)}" class="lockpill ${lockKind(k.id)}${k.status === 'In cabinet' ? '' : ' keyout'}" title="${esc(k.status)}">${esc(k.id)}</a>`).join('')}</div><p class="hint" style="margin-top:10px">${keys.filter(k => k.status !== 'In cabinet').length} of ${keys.length} not in the cabinet.</p>` : '<p>No dedicated locks.</p>')}
+    ${list('Directly connected equipment', near.length ? near.map(eqLink).join('<br>') : `<p>${e.sys === 'LV' ? 'LV connections are not mapped yet.' : 'None recorded.'}</p>`)}
+    </div>
+    <p class="hint" style="margin-top:14px">Planning and document-control indicators only, not verified electrical states.</p>
+    <a class="back" href="${U('equipment.html')}">← Back to equipment availability</a></div></section>`;
+  shell('equipment', hero, main);
+}
+
 /* ---------- Start ---------- */
+loadState();
 loadEvents().forEach(applyEvent);
 syncRegisters();
 const page = document.body.dataset.page;
-if(page === 'home') home();
+if((ROLE === 'contractor' && !CONTRACTOR_PAGES.has(page)) || (ROLE === 'mgmt' && (page === 'new' || page === 'requestnew'))) restrictedPage();
+else if(page === 'home') home();
+else if(page === 'requests') requestsPage();
+else if(page === 'requestnew') requestNewPage();
+else if(page === 'requestrec') requestRecPage();
+else if(page === 'programme') programmePage();
+else if(page === 'clearance') clearancePage();
+else if(page === 'equipment') equipmentPage();
 else if(page === 'registers') registersPage();
 else if(page === 'security') securityPage();
 else if(page === 'expired') expiredPage();
